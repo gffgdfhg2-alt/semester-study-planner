@@ -9,12 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#f6f8fd; --grid:rgba(43,69,214,.07); --surface:#ffffff; --ink:#14204a; --mute:#5b678f;
+  --paper:#f6f8fd; --grid:rgba(43,69,214,.035); --surface:#ffffff; --ink:#14204a; --mute:#5b678f;
   --line:#c9d2ec; --marker:#ffe14d; --marker-ink:#14204a; --accent:#2b45d6; --bad:#c62f3d; --warn:#b26a00; --ok:#1c7a46;
 }
 @media (prefers-color-scheme:dark){
   :root{
-    --paper:#0c1633; --grid:rgba(143,166,255,.08); --surface:#12214b; --ink:#e9eeff; --mute:#9dabd9;
+    --paper:#0c1633; --grid:rgba(143,166,255,.035); --surface:#12214b; --ink:#e9eeff; --mute:#9dabd9;
     --line:#2b3d78; --marker:#ffd93b; --marker-ink:#0c1633; --accent:#93a9ff; --bad:#ff8790; --warn:#ffc165; --ok:#6fdc9c;
   }
 }
@@ -25,11 +25,22 @@ body{
   font-family:'IBM Plex Sans Arabic','Tajawal',system-ui,'Segoe UI',Tahoma,sans-serif;
   background-color:var(--paper);
   background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-  background-size:26px 26px;
+  background-size:44px 44px;
   color:var(--ink);line-height:1.65;font-size:16px;
   padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));
 }
 .wrap{max-width:720px;margin:0 auto;padding:0 16px}
+/* on wide screens, frame the app as a centered card instead of a narrow
+   column lost in empty space */
+@media (min-width:800px){
+  body{padding-top:28px;padding-bottom:calc(28px + 96px)}
+  .top{max-width:720px;margin:0 auto;border-inline:1.5px solid var(--line);border-radius:18px 18px 0 0}
+  .top .topin{padding-inline:16px}
+  .wrap{border-inline:1.5px solid var(--line);background:color-mix(in srgb,var(--surface) 55%,transparent)}
+  .nav{position:fixed;inset-inline:0;bottom:28px;display:flex;justify-content:center;background:none;border-top:0;pointer-events:none}
+  .nav ul{pointer-events:auto;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;box-shadow:0 18px 40px rgba(10,20,60,.18);padding-inline:8px}
+  main#view{padding-bottom:24px}
+}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
@@ -64,7 +75,6 @@ bdi{unicode-bidi:isolate}
 /* headings */
 .hero{padding:22px 0 14px}
 .hero h1{font-size:2.3rem;line-height:1.15;font-weight:700}
-.h1en{color:var(--mute);margin-top:2px;font-size:.95rem}
 .hero .date{color:var(--mute);margin-top:2px}
 .hero .prog{display:flex;align-items:center;gap:12px;margin-top:14px}
 .hero .prog .bar{flex:1}
@@ -290,7 +300,6 @@ window.FIREBASE_CONFIG={
   <div class="wrap topin">
     <div>
       <div class="ttl">خطة الترم الدراسي</div>
-      <div class="sub"><bdi>Semester Study Planner</bdi></div>
       <div class="sub"><bdi>Computing, Level 1 / G2, Fall 2026-2027</bdi></div>
     </div>
     <div class="hr">
@@ -308,12 +317,12 @@ window.FIREBASE_CONFIG={
 
 <nav class="nav" aria-label="التنقل">
   <ul>
-    <li><button data-act="tab" data-v="today"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg></span><span>اليوم</span><small>Today</small></button></li>
-    <li><button data-act="tab" data-v="week"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9.2 9.5v10M14.8 9.5v10"/></svg></span><span>الأسبوع</span><small>Week</small></button></li>
-    <li><button data-act="tab" data-v="tasks"><span class="ic"><svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.4 1.4L7 5M3.5 12l1.4 1.4L7 11M3.5 18l1.4 1.4L7 17"/></svg></span><span>المهام</span><small>Tasks</small><b class="badge" id="bgTasks" hidden></b></button></li>
-    <li><button data-act="tab" data-v="review"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 20v-4.5h4.5"/></svg></span><span>المراجعة</span><small>Review</small><b class="badge" id="bgRev" hidden></b></button></li>
-    <li><button data-act="tab" data-v="subjects"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v13H7.5A2.5 2.5 0 0 1 5 17.5z"/><path d="M5 17.5A2.5 2.5 0 0 1 7.5 15H18"/></svg></span><span>المواد</span><small>Courses</small></button></li>
-    <li><button data-act="tab" data-v="progress"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/></svg></span><span>التقدم</span><small>Progress</small></button></li>
+    <li><button data-act="tab" data-v="today"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg></span><span>اليوم</span></button></li>
+    <li><button data-act="tab" data-v="week"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9.2 9.5v10M14.8 9.5v10"/></svg></span><span>الأسبوع</span></button></li>
+    <li><button data-act="tab" data-v="tasks"><span class="ic"><svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.4 1.4L7 5M3.5 12l1.4 1.4L7 11M3.5 18l1.4 1.4L7 17"/></svg></span><span>المهام</span><b class="badge" id="bgTasks" hidden></b></button></li>
+    <li><button data-act="tab" data-v="review"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 20v-4.5h4.5"/></svg></span><span>المراجعة</span><b class="badge" id="bgRev" hidden></b></button></li>
+    <li><button data-act="tab" data-v="subjects"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v13H7.5A2.5 2.5 0 0 1 5 17.5z"/><path d="M5 17.5A2.5 2.5 0 0 1 7.5 15H18"/></svg></span><span>المواد</span></button></li>
+    <li><button data-act="tab" data-v="progress"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/></svg></span><span>التقدم</span></button></li>
   </ul>
 </nav>
 
@@ -335,13 +344,12 @@ const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
 const today0=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate());};
 const diffDays=(a,b)=>Math.round((a-b)/86400000);
 function fmtDate(d){try{return d.toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'long'});}catch(e){return iso(d);}}
-function fmtDateEn(d){try{return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}catch(e){return iso(d);}}
 function hm(s){const p=s.split(':').map(Number);return (p[0]%12||12)+':'+pad(p[1]);}
 function ap(s){return Number(s.split(':')[0])<12?'AM':'PM';}
 function t12(s){return hm(s)+' '+ap(s);}
 const tm=s=>'<bdi dir="ltr">'+t12(s)+'</bdi>';
-const L=(ar,en)=>ar+'<span class="en"><bdi>'+en+'</bdi></span>';
-const H2=(ar,en)=>'<h2>'+L(ar,en)+'</h2>';
+const L=(ar)=>ar;
+const H2=(ar)=>'<h2>'+ar+'</h2>';
 
 /* ---------- data ---------- */
 const DAYS_AR=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
@@ -451,7 +459,7 @@ const subjOpts=()=>Object.keys(SUBJ).map(c=>'<option value="'+c+'">'+c+' '+SUBJ[
 function chk(key,label,cls){
   return '<label class="chk '+(cls||'')+'"><input type="checkbox" data-k="'+key+'" '+(S.checks[key]?'checked':'')+'><span class="box"></span><span class="lbl">'+esc(label)+'</span></label>';
 }
-function note(o){return '<p class="note"><span>'+o.ar+'</span><span class="en2"><bdi>'+o.en+'</bdi></span></p>';}
+function note(o){return '<p class="note"><span>'+o.ar+'</span></p>';}
 
 /* ---------- views ---------- */
 function viewToday(){
@@ -480,7 +488,7 @@ function viewToday(){
   const alerts=(dr?'<button class="alert" data-act="tab" data-v="review">لديك '+dr+' مراجعة مستحقة</button>':'')+
                (ut?'<button class="alert" data-act="tab" data-v="tasks">لديك '+ut+' مهمة حان موعد بدئها أو متأخرة</button>':'');
   return '<div class="daynav"><button class="btn" data-act="prev">السابق</button><button class="btn" data-act="now">اليوم</button><button class="btn" data-act="next">التالي</button></div>'+
-    '<section class="hero"><h1>'+DAYS_AR[dow]+'</h1><div class="date">'+fmtDate(d)+'</div><div class="h1en"><bdi>'+fmtDateEn(d)+'</bdi></div>'+
+    '<section class="hero"><h1>'+DAYS_AR[dow]+'</h1><div class="date">'+fmtDate(d)+'</div>'+
     '<div class="prog"><div class="bar"><i style="--p:'+pct+'%"></i></div><span>'+st.done+' / '+st.total+'</span></div>'+
     (isToday?'<button class="trendbtn" data-act="tab" data-v="progress">'+chip(paceStatus(calcWeek(weekStart()).pace))+'<span>'+L('الوتيرة الأسبوعية','Weekly pace')+'</span></button>':'')+
     note(dayLine(dow))+(isToday&&alerts?'<div class="alerts">'+alerts+'</div>':'')+'</section>'+
@@ -495,11 +503,11 @@ function viewWeek(){
     const d=addDays(ws,i),st=dayStats(d);T+=st.total;D+=st.done;
     const isT=iso(d)===iso(today0());
     const list=sessOf(dow).map(s=>'<li style="--c:'+SUBJ[s.sub].color+'"><i></i><bdi>'+t12(s.start)+'</bdi><b class="code" dir="ltr">'+s.sub+'</b><span>'+L(TYPE_AR[s.type],TYPE_EN[s.type])+(s.mode==='online'?' '+L('أونلاين','Online'):'')+'</span></li>').join('')||'<li class="none">'+L('بدون حصص','No classes')+'</li>';
-    return '<article class="panel wd '+(isT?'is-today':'')+'"><header><h3>'+DAYS_AR[dow]+'<small><bdi>'+DAYS_EN[dow]+'</bdi></small><small>'+fmtDate(d)+'</small></h3><span class="frac">'+dayArrow(d,st)+st.done+' / '+st.total+'</span></header>'+
+    return '<article class="panel wd '+(isT?'is-today':'')+'"><header><h3>'+DAYS_AR[dow]+'<small>'+fmtDate(d)+'</small></h3><span class="frac">'+dayArrow(d,st)+st.done+' / '+st.total+'</span></header>'+
       '<ul>'+list+'</ul><button class="btn sm" data-act="go" data-d="'+iso(d)+'">فتح اليوم</button></article>';
   }).join('');
   const p=T?Math.round(D/T*100):0;
-  return '<section class="hero"><h1>الأسبوع</h1><div class="h1en"><bdi>Weekly overview</bdi></div><div class="date">من '+fmtDate(ws)+' إلى '+fmtDate(addDays(ws,6))+'</div>'+
+  return '<section class="hero"><h1>الأسبوع</h1><div class="date">من '+fmtDate(ws)+' إلى '+fmtDate(addDays(ws,6))+'</div>'+
     '<div class="prog"><div class="bar"><i style="--p:'+p+'%"></i></div><span>'+p+'%</span></div></section>'+
     '<div class="week">'+cards+'</div>';
 }
@@ -514,7 +522,7 @@ function viewTasks(){
   };
   const act=S.tasks.filter(t=>!t.done).sort((a,b)=>a.deadline.localeCompare(b.deadline));
   const dn=S.tasks.filter(t=>t.done).sort((a,b)=>b.deadline.localeCompare(a.deadline));
-  return '<section class="hero"><h1>المهام</h1><div class="h1en"><bdi>Tasks and deadlines</bdi></div>'+
+  return '<section class="hero"><h1>المهام</h1>'+
     note({ar:'تُجدول كل مهمة لتبدأ قبل موعد التسليم بثلاثة أيام على الأقل، ولا تبدأ خلال آخر 48 ساعة.',en:'Each task is scheduled to start at least 3 days before its deadline, and never within the last 48 hours.'})+'</section>'+
     '<form class="panel form" data-form="task"><h3>'+L('مهمة جديدة','New task')+'</h3>'+
     '<label><span>'+L('الاسم','Title')+'</span><input name="title" placeholder="e.g. Assignment 1" required></label>'+
@@ -537,7 +545,7 @@ function viewReview(){
       '<div class="rv-act">'+(isDue?'<button class="btn sm primary" data-act="rvdone" data-id="'+r.id+'">تمت المراجعة</button><button class="btn sm" data-act="rvforgot" data-id="'+r.id+'">لم أتذكرها</button>':'')+
       '<button class="btn sm ghost" data-act="rvdel" data-id="'+r.id+'">حذف</button></div></li>';
   };
-  return '<section class="hero"><h1>المراجعة</h1><div class="h1en"><bdi>Spaced review</bdi></div>'+
+  return '<section class="hero"><h1>المراجعة</h1>'+
     note({ar:'تعود الدروس المنجزة للمراجعة بعد يوم، ثم 3 أيام، ثم أسبوع، ثم أسبوعين، ثم شهر.',en:'Completed topics return for review after 1, 3, 7, 14 and 30 days.'})+'</section>'+
     '<form class="panel form" data-form="review"><h3>'+L('درس جديد','New topic')+'</h3>'+
     '<div class="two"><label><span>'+L('المادة','Course')+'</span><select name="sub">'+subjOpts()+'</select></label><label><span>'+L('الدرس أو الموضوع','Topic')+'</span><input name="topic" placeholder="e.g. Loops" required></label></div>'+
@@ -557,7 +565,7 @@ function viewSubjects(){
       '<ul>'+rows+'</ul><div class="counts"><span class="pill">'+rv+' مراجعة</span><span class="pill">'+tk+' مهمة مفتوحة</span></div>'+
       '<textarea class="notes" data-note="'+code+'" aria-label="ملاحظات '+code+'" placeholder="ملاحظات / Notes"></textarea></article>';
   }).join('');
-  return '<section class="hero"><h1>المواد</h1><div class="h1en"><bdi>Courses</bdi></div>'+
+  return '<section class="hero"><h1>المواد</h1>'+
     note({ar:Object.keys(SUBJ).length+' مواد و'+SESS.length+' حصة أسبوعيًا.',en:Object.keys(SUBJ).length+' courses, '+SESS.length+' sessions per week.'})+'</section><div class="stack">'+cards+'</div>'+
     H2('البيانات','Data and backup')+'<div class="panel form"><p class="hint">تُحفظ البيانات في هذا المتصفح، وتُزامَن مع الحساب عند تسجيل الدخول، ويمكن تصدير نسخة احتياطية منها.</p>'+
     '<div class="tools"><button class="btn" data-act="export">نسخة احتياطية</button><button class="btn" data-act="import">استعادة نسخة</button><button class="btn ghost" data-act="reset">مسح كل البيانات</button></div></div>';
@@ -572,7 +580,7 @@ const ARROW={
 const NEU={cls:'neu',arrow:'flat',ar:'لا توجد بيانات بعد',en:'No data yet'};
 function chip(st,mini){
   if(mini)return '<span class="trend mini '+st.cls+'" title="'+st.en+'" aria-label="'+st.ar+'">'+ARROW[st.arrow]+'</span>';
-  return '<span class="trend '+st.cls+'">'+ARROW[st.arrow]+'<span>'+st.ar+'</span><bdi class="en">'+st.en+'</bdi></span>';
+  return '<span class="trend '+st.cls+'">'+ARROW[st.arrow]+'<span>'+st.ar+'</span></span>';
 }
 function paceStatus(r){
   if(r===null)return {cls:'neu',arrow:'flat',ar:'بداية المتابعة',en:'Just started'};
@@ -682,7 +690,7 @@ function viewProgress(){
   const dayCols=m.days.map((x,i)=>{
     const dow=ORDER[i];let h='4px',bc='var(--line)',pc='';
     if(x.active&&x.pct!==null&&x.c<=0){h=Math.max(4,x.pct)+'%';bc=x.c===0?'var(--accent)':(x.pct>=85?'var(--ok)':x.pct>=60?'var(--warn)':'var(--bad)');pc=x.pct+'%';}
-    return '<div class="col '+(x.c===0?'today':'')+'"><span class="pc">'+pc+'</span><div class="track"><i class="b" style="--h:'+h+';--bc:'+bc+'"></i></div><span class="lab">'+DAYS_AR[dow]+'<br><bdi>'+DAYS_EN[dow].slice(0,3)+'</bdi></span></div>';
+    return '<div class="col '+(x.c===0?'today':'')+'"><span class="pc">'+pc+'</span><div class="track"><i class="b" style="--h:'+h+';--bc:'+bc+'"></i></div><span class="lab">'+DAYS_AR[dow]+'</span></div>';
   }).join('');
 
   const hist=[3,2,1,0].map(k=>({k,d:addDays(ws,-7*k),v:k?calcWeek(addDays(ws,-7*k)).pct:curPct}));
@@ -706,7 +714,7 @@ function viewProgress(){
 
   const legend='<div class="panel legend">'+chip({cls:'ok',arrow:'up',ar:'متقدم / جيد / تحسّن',en:'Ahead / Good / Improving'})+chip({cls:'ok',arrow:'flat',ar:'على المسار',en:'On track'})+chip({cls:'warn',arrow:'flat',ar:'متوسط',en:'Fair'})+chip({cls:'bad',arrow:'down',ar:'متأخر / منخفض / تراجع',en:'Behind / Low / Declining'})+'</div>';
 
-  return '<section class="hero"><h1>التقدم</h1><div class="h1en"><bdi>Progress and trends</bdi></div>'+
+  return '<section class="hero"><h1>التقدم</h1>'+
     note({ar:'تُقارَن الوتيرة بما يتطلبه الجدول حتى هذه اللحظة (تحضير، حضور، تلخيص، مذاكرة).',en:'Pace compares completed items with what the schedule requires up to now.'})+'</section>'+
     pace+tiles+
     H2('النشاط اليومي','Daily activity')+'<div class="panel chart c7">'+dayCols+'</div>'+
