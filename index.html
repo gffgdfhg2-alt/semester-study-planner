@@ -352,11 +352,11 @@ textarea.notes{min-height:76px;resize:vertical}
             allow read, write: if request.auth != null && request.auth.uid == userId;
           }
 
-          // One vote per account. Votes can be read by signed-in users so results
-          // can be counted, and they can never be edited or deleted.
+          // One vote per account. Signed-in users can read votes so results can be
+          // counted. Each user can create and change only their own vote.
           match /support_votes/{uid} {
             allow read: if request.auth != null;
-            allow create: if request.auth != null
+            allow create, update: if request.auth != null
               && request.auth.uid == uid
               && request.resource.data.keys().hasOnly(['support', 'group', 'createdAt'])
               && request.resource.data.support is bool
@@ -368,7 +368,7 @@ textarea.notes{min-height:76px;resize:vertical}
                     && request.resource.data.group >= 1
                     && request.resource.data.group <= 16)
               );
-            allow update, delete: if false;
+            allow delete: if false;
           }
         }
       }
@@ -509,7 +509,7 @@ const cloud={configured:false,ready:false,user:null,status:'idle',err:''};
 const CFG=window.FIREBASE_CONFIG||{};
 cloud.configured=!!(CFG.apiKey&&CFG.projectId&&!/^PASTE/i.test(CFG.apiKey)&&!/^PASTE/i.test(CFG.projectId));
 cloud.checking=cloud.configured;cloud.mode='login';cloud.msg='';cloud.msgKind='err';cloud.loadFailed=false;
-const poll={status:'idle',votes:[],mine:null,err:'',busy:false,draft:{support:null,group:null}};
+const poll={status:'idle',votes:[],mine:null,err:'',busy:false,editing:false,draft:{support:null,group:null}};
 const bridge={onSave:null,cloud:cloud,guestKey:KEY,poll:poll};
 let storageKey=KEY;
 let S=load(storageKey);
@@ -830,12 +830,14 @@ function voteForm(){
     h+='</div></div>';
   }
   const ready=dr.support===false||(dr.support===true&&!!dr.group);
-  h+='<button class="btn primary" data-act="pollsubmit"'+(ready&&!poll.busy?'':' disabled')+'>'+(poll.busy?'Submitting…':'Submit vote')+'</button>'+
-    '<p class="hint">Your vote is final and cannot be changed after you submit it.</p></section>';
+  const ed=poll.editing;
+  h+='<div class="tools"><button class="btn primary" data-act="pollsubmit"'+(ready&&!poll.busy?'':' disabled')+'>'+(poll.busy?'Saving…':(ed?'Update vote':'Submit vote'))+'</button>'+
+    (ed?'<button class="btn quiet" data-act="pollcancel"'+(poll.busy?' disabled':'')+'>Cancel</button>':'')+'</div>'+
+    '<p class="hint">You can change your vote at any time. Only your latest vote is counted.</p></section>';
   return h;
 }
 function voteDone(m){
-  return '<section class="panel form done-note"><h3>Your vote is recorded</h3><p>'+(m.support?'You voted Yes for Group '+m.group+'.':'You voted No.')+'</p></section>';
+  return '<section class="panel form done-note"><h3>Your vote is recorded</h3><p>'+(m.support?'You voted Yes for Group '+m.group+'.':'You voted No.')+'</p><div class="tools" style="margin-top:8px"><button class="btn" data-act="pollchange">Change vote</button></div></section>';
 }
 function pollResults(mine){
   if(!mine)return '<section class="panel empty">Results appear after you vote.</section>';
@@ -854,21 +856,22 @@ function pollResults(mine){
     '<section class="sec">'+H2('Yes votes by group')+'<div class="panel form">'+rows+'</div></section></div>';
 }
 function viewPoll(){
-  const head='<div class="ph"><div><h1>Poll</h1><p class="sub">One vote per student.</p></div></div>';
+  const head='<div class="ph"><div><h1>Poll</h1><p class="sub">One vote per student. You can change your vote later.</p></div></div>';
   if(!cloud.user)return head+'<div class="panel empty">Sign in to take part in the poll.</div>';
   if(poll.status==='error')return head+'<div class="panel empty">'+esc(poll.err||'Could not load the poll.')+'</div>';
   if(poll.status!=='ready')return head+'<div class="panel empty">Loading the poll…</div>';
-  return head+'<div class="cols two">'+(poll.mine?voteDone(poll.mine):voteForm())+pollResults(poll.mine)+'</div>';
+  return head+'<div class="cols two">'+(poll.mine&&!poll.editing?voteDone(poll.mine):voteForm())+pollResults(poll.mine)+'</div>';
 }
 async function submitVote(){
   const dr=poll.draft;
   if(poll.busy||dr.support===null||(dr.support&&!dr.group))return;
   if(!bridge.pollVote){toast('The poll is not ready yet.');return;}
+  const wasEdit=poll.editing;
   poll.busy=true;render();
-  try{await bridge.pollVote(dr.support,dr.support?dr.group:null);toast('Vote submitted');}
+  try{await bridge.pollVote(dr.support,dr.support?dr.group:null);poll.editing=false;toast(wasEdit?'Vote updated':'Vote submitted');}
   catch(e){
     console.error(e);
-    toast(e&&e.code==='permission-denied'?'Vote not saved. You may have already voted, or the poll rules are not published.':'Vote not saved. Check your connection and try again.');
+    toast(e&&e.code==='permission-denied'?'Vote not saved. Make sure the updated poll rules are published in Firebase.':'Vote not saved. Check your connection and try again.');
   }
   poll.busy=false;render();
 }
@@ -993,7 +996,7 @@ Object.assign(bridge,{
   },
   signedOut(){
     cloud.user=null;cloud.checking=false;cloud.status='idle';cloud.msg='';
-    poll.draft={support:null,group:null};
+    poll.draft={support:null,group:null};poll.editing=false;
     storageKey=KEY;S=load(KEY);renderAcct();render();openAuth();
   }
 });
@@ -1039,6 +1042,8 @@ document.addEventListener('click',e=>{
   if(a==='pollans'){poll.draft.support=el.dataset.v==='yes';render();return;}
   if(a==='pollgrp'){poll.draft.group=parseInt(el.dataset.g,10);render();return;}
   if(a==='pollsubmit'){submitVote();return;}
+  if(a==='pollchange'){const m=poll.mine;poll.editing=true;poll.draft={support:m?m.support:null,group:m?m.group:null};render();return;}
+  if(a==='pollcancel'){poll.editing=false;render();return;}
   if(a==='export'){
     const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
     const l=document.createElement('a');l.href=URL.createObjectURL(blob);l.download='planner-backup.json';document.body.appendChild(l);l.click();l.remove();
@@ -1209,7 +1214,7 @@ const CFG=window.FIREBASE_CONFIG||{};
   let pollUnsub=null;
   function pollStop(){
     if(pollUnsub){pollUnsub();pollUnsub=null;}
-    B.setPoll({status:'idle',votes:[],mine:null,err:'',busy:false});
+    B.setPoll({status:'idle',votes:[],mine:null,err:'',busy:false,editing:false});
   }
   function pollStart(user){
     if(pollUnsub){pollUnsub();pollUnsub=null;}
