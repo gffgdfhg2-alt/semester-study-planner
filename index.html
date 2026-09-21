@@ -9,12 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#f6f8fd; --grid:rgba(43,69,214,.035); --surface:#ffffff; --ink:#14204a; --mute:#5b678f;
+  --paper:#f6f8fd; --surface:#ffffff; --ink:#14204a; --mute:#5b678f;
   --line:#c9d2ec; --marker:#ffe14d; --marker-ink:#14204a; --accent:#2b45d6; --bad:#c62f3d; --warn:#b26a00; --ok:#1c7a46;
 }
 @media (prefers-color-scheme:dark){
   :root{
-    --paper:#0c1633; --grid:rgba(143,166,255,.035); --surface:#12214b; --ink:#e9eeff; --mute:#9dabd9;
+    --paper:#0c1633; --surface:#12214b; --ink:#e9eeff; --mute:#9dabd9;
     --line:#2b3d78; --marker:#ffd93b; --marker-ink:#0c1633; --accent:#93a9ff; --bad:#ff8790; --warn:#ffc165; --ok:#6fdc9c;
   }
 }
@@ -24,23 +24,10 @@ html{-webkit-text-size-adjust:100%}
 body{
   font-family:'IBM Plex Sans Arabic','Tajawal',system-ui,'Segoe UI',Tahoma,sans-serif;
   background-color:var(--paper);
-  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-  background-size:44px 44px;
   color:var(--ink);line-height:1.65;font-size:16px;
   padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));
 }
 .wrap{max-width:720px;margin:0 auto;padding:0 16px}
-/* on wide screens, frame the app as a centered card instead of a narrow
-   column lost in empty space */
-@media (min-width:800px){
-  body{padding-top:28px;padding-bottom:calc(28px + 96px)}
-  .top{max-width:720px;margin:0 auto;border-inline:1.5px solid var(--line);border-radius:18px 18px 0 0}
-  .top .topin{padding-inline:16px}
-  .wrap{border-inline:1.5px solid var(--line);background:color-mix(in srgb,var(--surface) 55%,transparent)}
-  .nav{position:fixed;inset-inline:0;bottom:28px;display:flex;justify-content:center;background:none;border-top:0;pointer-events:none}
-  .nav ul{pointer-events:auto;background:var(--surface);border:1.5px solid var(--line);border-radius:16px;box-shadow:0 18px 40px rgba(10,20,60,.18);padding-inline:8px}
-  main#view{padding-bottom:24px}
-}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
@@ -261,6 +248,25 @@ textarea.notes{min-height:74px;resize:vertical}
 #toast.show{opacity:1;transform:none}
 @media (max-width:420px){.hero h1{font-size:2rem}.slot{grid-template-columns:72px 1fr}.two{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* desktop: replace the bottom tab bar with a side rail, and shift the
+   whole page next to it, so the app fills the window width instead of
+   floating as a lone box in empty space */
+@media (min-width:880px){
+  body{padding-inline-start:220px;padding-bottom:0}
+  .wrap{max-width:820px;margin-inline:0 auto}
+  .nav{
+    position:fixed;inset-inline-start:0;inset-inline-end:auto;top:0;bottom:0;
+    width:220px;height:100%;background:var(--surface);border-top:0;
+    border-inline-end:1.5px solid var(--line);padding-bottom:0;
+    padding-top:calc(18px + env(safe-area-inset-top,0px));
+  }
+  .nav ul{max-width:none;margin:0;grid-template-columns:1fr;gap:2px;padding-inline:10px}
+  .nav button{flex-direction:row;justify-content:flex-start;gap:10px;padding:10px 12px;border-radius:10px}
+  .nav .ic{margin-bottom:0}
+  .nav small{font-size:.72rem}
+  .nav button.on{background:color-mix(in srgb,var(--marker) 16%,transparent)}
+  .badge{inset-inline-start:auto;inset-inline-end:10px;top:50%;transform:translateY(-50%)}
+}
 </style>
 <script>
 /* =====================================================================
