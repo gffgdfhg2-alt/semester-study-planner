@@ -7,7 +7,7 @@
 <title>Study Planner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f6f7f9; --surface:#ffffff; --sunken:#eef0f4;
@@ -32,7 +32,7 @@
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{
-  font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  font-family:'IBM Plex Sans','IBM Plex Sans Arabic',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
   background:var(--bg);color:var(--ink);font-size:15px;line-height:1.55;
   font-variant-numeric:tabular-nums;
   padding-bottom:calc(76px + env(safe-area-inset-bottom,0px));
@@ -257,6 +257,10 @@ textarea.notes{min-height:76px;resize:vertical}
 
 /* account + sign-in gate */
 .acct{position:relative;width:36px;height:36px;padding:0;border:1px solid var(--line2);border-radius:50%;background:var(--surface);flex:none}
+.lang{height:32px;padding:0 12px;border:1px solid var(--line2);border-radius:999px;background:var(--surface);color:var(--ink2);font-size:.82rem;font-weight:600;flex:none;white-space:nowrap}
+.lang:hover{background:var(--sunken)}
+html[dir=rtl] body{font-family:'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+html[dir=rtl] .gut b,html[dir=rtl] .wd li .tm{direction:ltr;text-align:start;unicode-bidi:isolate}
 .av{width:100%;height:100%;border-radius:50%;background:var(--tint);color:var(--accent);display:grid;place-items:center;font-weight:600;position:relative;overflow:hidden}
 .av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .dot{position:absolute;bottom:-2px;inset-inline-end:-2px;width:11px;height:11px;border-radius:50%;border:2px solid var(--surface);background:var(--ink3)}
@@ -337,6 +341,93 @@ textarea.notes{min-height:76px;resize:vertical}
 </style>
 <script>
 /* =====================================================================
+   TERM SETTINGS — edit this block only.
+   Everything below it is program logic and does not need to change
+   when the schedule, the courses or the term change.
+   Any text shown to the user may be written either as a plain string,
+   which is used for both languages, or as {en:'…',ar:'…'}.
+   ===================================================================== */
+window.PLANNER_CONFIG={
+
+  /* Shown under the title in the header. */
+  term:{en:'Computing, Level 1 / G2, Fall 2026-2027',ar:'حاسبات، المستوى الأول / مجموعة 2، خريف 2026-2027'},
+
+  /* Number of groups offered in the support-sessions poll. */
+  groups:16,
+
+  /* Days between one review and the next, for each stage. */
+  reviewIntervals:[1,3,7,14,30],
+
+  /* Courses. The key is the course code used everywhere else. */
+  subjects:{
+    CF117:{name:{en:'Introduction to Programming',ar:'مقدمة في البرمجة'},short:{en:'Programming',ar:'البرمجة'},color:'#3f63e0'},
+    BS114:{name:{en:'Physics & Electronics',ar:'الفيزياء والإلكترونيات'},short:{en:'Physics & Electronics',ar:'فيزياء وإلكترونيات'},color:'#0f8f83'},
+    UR112:{name:{en:'Introduction to Computers',ar:'مقدمة في الحاسبات'},short:{en:'Intro to Computers',ar:'مقدمة حاسبات'},color:'#c98410'},
+    BS113:{name:{en:'English Language (1)',ar:'اللغة الإنجليزية (1)'},short:{en:'English',ar:'إنجليزي'},color:'#cf3f55'},
+    UR113:{name:{en:'Entrepreneurship and Innovation',ar:'ريادة الأعمال والابتكار'},short:{en:'Entrepreneurship',ar:'ريادة أعمال'},color:'#8355d6'},
+    UR111:{name:{en:'Human Rights',ar:'حقوق الإنسان'},short:{en:'Human Rights',ar:'حقوق الإنسان'},color:'#2e9450'},
+    BS116:{name:{en:'Mathematics (1): Calculus for Computing Sciences',ar:'الرياضيات (1): التفاضل والتكامل لعلوم الحاسب'},short:{en:'Calculus',ar:'رياضيات'},color:'#cc4593'}
+  },
+
+  /* Weekly timetable.
+     id    a unique name, keep it stable so ticked steps are not lost
+     day   0 Sunday to 6 Saturday
+     type  LEC, LAB or TUT
+     mode  'onsite' (then set place) or 'online' */
+  sessions:[
+    {id:'sat-cf-lab',day:6,start:'10:40',end:'12:20',sub:'CF117',type:'LAB',mode:'onsite',place:'B1.1',who:{en:'TA Mai Sherif, Abdallah Mahmod',ar:'م. مي شريف، عبدالله محمود'}},
+    {id:'sat-bs114-lab',day:6,start:'12:30',end:'14:05',sub:'BS114',type:'LAB',mode:'onsite',place:{en:'Physics lab 2',ar:'معمل فيزياء 2'},who:{en:'TA Omar Alaa, Ahmed Nashaat',ar:'م. عمر علاء، أحمد نشأت'}},
+    {id:'sat-ur112-lab',day:6,start:'14:10',end:'14:55',sub:'UR112',type:'LAB',mode:'onsite',place:'B 0.2',who:{en:'TA Mona Mohamed, Rawan Nagy',ar:'م. منى محمد، روان ناجي'}},
+    {id:'sat-ur112-tu',day:6,start:'15:00',end:'15:45',sub:'UR112',type:'TUT',mode:'onsite',place:'B 0.2',who:{en:'TA Mona Mohamed, Rawan Nagy',ar:'م. منى محمد، روان ناجي'}},
+    {id:'sun-bs113-tut',day:0,start:'09:00',end:'10:35',sub:'BS113',type:'TUT',mode:'online',who:{en:'Dr. Dina',ar:'د. دينا'}},
+    {id:'sun-ur113-lec',day:0,start:'10:40',end:'11:25',sub:'UR113',type:'LEC',mode:'online',who:{en:'Dr. Romany',ar:'د. روماني'}},
+    {id:'mon-bs113-lec',day:1,start:'09:00',end:'10:35',sub:'BS113',type:'LEC',mode:'online',who:{en:'Dr. Dina',ar:'د. دينا'}},
+    {id:'mon-ur111-lec',day:1,start:'10:40',end:'11:25',sub:'UR111',type:'LEC',mode:'online',who:{en:'Dr. Islam Mohamed Abdelqawee',ar:'د. إسلام محمد عبدالقوي'}},
+    {id:'wed-ur112-lec',day:3,start:'09:00',end:'10:35',sub:'UR112',type:'LEC',mode:'onsite',place:{en:'Hall A 1.1',ar:'قاعة A 1.1'},who:{en:'Dr. Ahmed S. Salama',ar:'د. أحمد س. سلامة'}},
+    {id:'thu-cf-lec',day:4,start:'09:00',end:'10:35',sub:'CF117',type:'LEC',mode:'onsite',place:{en:'Hall A 0.1',ar:'قاعة A 0.1'},who:{en:'Dr. Shimaa',ar:'د. شيماء'}},
+    {id:'thu-bs116-tu',day:4,start:'10:40',end:'12:20',sub:'BS116',type:'TUT',mode:'onsite',place:{en:'B.Class room 3',ar:'قاعة B رقم 3'},who:{en:'Renal Hany',ar:'رينال هاني'}},
+    {id:'thu-bs114-lec',day:4,start:'12:30',end:'14:05',sub:'BS114',type:'LEC',mode:'onsite',place:{en:'Hall A 2.1',ar:'قاعة A 2.1'},who:{en:'Dr. Romany',ar:'د. روماني'}},
+    {id:'thu-bs116-lec',day:4,start:'14:10',end:'15:45',sub:'BS116',type:'LEC',mode:'onsite',place:{en:'Hall A1.1',ar:'قاعة A1.1'},who:{en:'Dr. Muhammed Elsayed',ar:'د. محمد السيد'}}
+  ],
+
+  /* The study plan checklist for each day of the week. */
+  blocks:{
+    6:[{en:'Review lab work and finish the report or code (30 min)',ar:'راجع شغل المعمل وخلّص التقرير أو الكود (30 دقيقة)'},
+       {en:'Prepare the English tutorial (15 min)',ar:'حضّر سكشن الإنجليزي (15 دقيقة)'},
+       {en:'Get ready for the Sunday online classes (9:00 AM)',ar:'جهّز نفسك لمحاضرات الأحد أونلاين (9:00 ص)'}],
+    0:[{en:'Review Entrepreneurship and English (30 min)',ar:'راجع ريادة الأعمال والإنجليزي (30 دقيقة)'},
+       {en:'Math: weekly problem set (90 min)',ar:'رياضيات: مسائل الأسبوع (90 دقيقة)'},
+       {en:'CF117: coding practice (45 min)',ar:'CF117: تدريب برمجة (45 دقيقة)'}],
+    1:[{en:'Review English and Human Rights (30 min)',ar:'راجع الإنجليزي وحقوق الإنسان (30 دقيقة)'},
+       {en:'Physics & Electronics (90 min)',ar:'فيزياء وإلكترونيات (90 دقيقة)'},
+       {en:'CF117: coding practice (45 min)',ar:'CF117: تدريب برمجة (45 دقيقة)'}],
+    2:[{en:'CF117: programming and practice (2 hours)',ar:'CF117: برمجة وتطبيق (ساعتان)'},
+       {en:'Math (90 min)',ar:'رياضيات (90 دقيقة)'},
+       {en:'Review UR112 and Physics (40 min)',ar:'راجع UR112 والفيزياء (40 دقيقة)'},
+       {en:'Catch up on overdue tasks',ar:'الحق المهام المتأخرة'}],
+    3:[{en:'Review UR112 (20 min)',ar:'راجع UR112 (20 دقيقة)'},
+       {en:'Prepare the Thursday sessions: CF117, BS114, BS116 (45 min)',ar:'حضّر محاضرات الخميس: CF117 وBS114 وBS116 (45 دقيقة)'},
+       {en:'Solve Math problems before the tutorial (60 min)',ar:'حل مسائل الرياضيات قبل السكشن (60 دقيقة)'}],
+    4:[{en:'Summarize the four sessions and note questions (40 min)',ar:'لخّص المحاضرات الأربعة وسجّل أسئلتك (40 دقيقة)'}],
+    5:[{en:'Prepare the three Saturday labs (60 to 75 min)',ar:'حضّر معامل السبت التلاتة (60 إلى 75 دقيقة)'},
+       {en:'Weekly review and self-test for each course (40 min)',ar:'مراجعة أسبوعية واختبر نفسك في كل مادة (40 دقيقة)'},
+       {en:'Plan next week and organize tasks (15 min)',ar:'خطّط للأسبوع الجاي ورتّب المهام (15 دقيقة)'}]
+  },
+
+  /* Line shown on days that have no sessions. */
+  noClassNotes:{
+    2:{en:'No sessions today. Use the day for programming, math and review.',ar:'مفيش محاضرات النهاردة. استغل اليوم في البرمجة والرياضيات والمراجعة.'},
+    5:{en:'No sessions today. Prepare the Saturday labs and plan the week.',ar:'مفيش محاضرات النهاردة. حضّر معامل السبت وخطّط للأسبوع.'}
+  },
+
+  /* Ticked items older than this many days are dropped, so the saved
+     data does not grow without limit. */
+  keepChecksDays:120
+};
+</script>
+
+<script>
+/* =====================================================================
    FIREBASE SETTINGS
    1) Firebase console > Project settings > Your apps > Web app > SDK setup:
       copy the config values below.
@@ -354,6 +445,14 @@ textarea.notes{min-height:76px;resize:vertical}
 
           // One vote per account. Signed-in users can read votes so results can be
           // counted. Each user can create and change only their own vote.
+          //
+          // NOTE ON PRIVACY: because each vote document is named after the voter's
+          // account id and every signed-in user may read the collection, the poll
+          // is NOT anonymous. Anyone who opens the browser console can see which
+          // account voted for what. The app now says so on the Poll tab. To make it
+          // truly anonymous you need a Cloud Function that writes only the totals
+          // to a public counters document and changes the read rule here to
+          //   allow read: if request.auth != null && request.auth.uid == uid;
           match /support_votes/{uid} {
             allow read: if request.auth != null;
             allow create, update: if request.auth != null
@@ -394,32 +493,33 @@ window.FIREBASE_CONFIG={
 <header class="top">
   <div class="topin">
     <div>
-      <div class="ttl">Study Planner</div>
-      <div class="sub">Computing, Level 1 / G2, Fall 2026-2027</div>
+      <div class="ttl" data-i18n="appName"></div>
+      <div class="sub" id="termLine"></div>
     </div>
     <div class="hr">
       <div class="wk"><span id="wkTxt"></span><div class="bar"><i id="wkBar"></i></div></div>
+      <button id="lang" class="lang" data-act="lang" type="button"></button>
       <button id="acct" class="acct" data-act="acct" aria-label="Account" hidden></button>
     </div>
   </div>
 </header>
 
 <div class="page">
-  <div id="warn" class="notice" hidden>Data cannot be saved in this browser (private mode may be on). It will be cleared when you close the page.</div>
+  <div id="warn" class="notice" hidden data-i18n="noStore"></div>
   <main id="view"></main>
-  <footer class="credit">Developed by <b>Eng. Abdulghani Saeed</b></footer>
+  <footer class="credit" id="credit"></footer>
 </div>
 
-<nav class="nav" aria-label="Main">
-  <div class="brand">Study Planner<small>Computing, Level 1</small></div>
+<nav class="nav" data-i18n-attr="aria-label|nav">
+  <div class="brand"><span data-i18n="appName"></span><small id="brandSub"></small></div>
   <ul>
-    <li><button data-act="tab" data-v="today"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg><span>Today</span></button></li>
-    <li><button data-act="tab" data-v="week"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9.2 9.5v10M14.8 9.5v10"/></svg><span>Week</span></button></li>
-    <li><button data-act="tab" data-v="tasks"><svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.4 1.4L7 5M3.5 12l1.4 1.4L7 11M3.5 18l1.4 1.4L7 17"/></svg><span>Tasks</span><b class="badge" id="bgTasks" hidden></b></button></li>
-    <li><button data-act="tab" data-v="review"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 20v-4.5h4.5"/></svg><span>Review</span><b class="badge" id="bgRev" hidden></b></button></li>
-    <li><button data-act="tab" data-v="subjects"><svg viewBox="0 0 24 24"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v13H7.5A2.5 2.5 0 0 1 5 17.5z"/><path d="M5 17.5A2.5 2.5 0 0 1 7.5 15H18"/></svg><span>Courses</span></button></li>
-    <li><button data-act="tab" data-v="progress"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/></svg><span>Progress</span></button></li>
-    <li><button data-act="tab" data-v="poll"><svg viewBox="0 0 24 24"><path d="M3.5 13h17v7h-17z"/><path d="M8 13V6.5h8V13"/><path d="M10.5 9.6l1.3 1.3 2.2-2.5"/></svg><span>Poll</span><b class="badge info" id="bgPoll" hidden></b></button></li>
+    <li><button data-act="tab" data-v="today"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg><span data-i18n="tab_today"></span></button></li>
+    <li><button data-act="tab" data-v="week"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9.2 9.5v10M14.8 9.5v10"/></svg><span data-i18n="tab_week"></span></button></li>
+    <li><button data-act="tab" data-v="tasks"><svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.4 1.4L7 5M3.5 12l1.4 1.4L7 11M3.5 18l1.4 1.4L7 17"/></svg><span data-i18n="tab_tasks"></span><b class="badge" id="bgTasks" hidden></b></button></li>
+    <li><button data-act="tab" data-v="review"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 20v-4.5h4.5"/></svg><span data-i18n="tab_review"></span><b class="badge" id="bgRev" hidden></b></button></li>
+    <li><button data-act="tab" data-v="subjects"><svg viewBox="0 0 24 24"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v13H7.5A2.5 2.5 0 0 1 5 17.5z"/><path d="M5 17.5A2.5 2.5 0 0 1 7.5 15H18"/></svg><span data-i18n="tab_subjects"></span></button></li>
+    <li><button data-act="tab" data-v="progress"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/></svg><span data-i18n="tab_progress"></span></button></li>
+    <li><button data-act="tab" data-v="poll"><svg viewBox="0 0 24 24"><path d="M3.5 13h17v7h-17z"/><path d="M8 13V6.5h8V13"/><path d="M10.5 9.6l1.3 1.3 2.2-2.5"/></svg><span data-i18n="tab_poll"></span><b class="badge info" id="bgPoll" hidden></b></button></li>
   </ul>
 </nav>
 
@@ -440,71 +540,308 @@ const parse=s=>{const p=String(s).split('-').map(Number);return new Date(p[0],p[
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
 const today0=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate());};
 const diffDays=(a,b)=>Math.round((a-b)/86400000);
-const plural=(n,w)=>n+' '+w+(n===1?'':'s');
-function fmtDate(d){try{return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}catch(e){return iso(d);}}
-function fmtLong(d){try{return d.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});}catch(e){return iso(d);}}
+
+function fmtDate(d){try{return d.toLocaleDateString(RAW('locale'),{day:'numeric',month:'short'});}catch(e){return iso(d);}}
+function fmtLong(d){try{return d.toLocaleDateString(RAW('locale'),{day:'numeric',month:'long',year:'numeric'});}catch(e){return iso(d);}}
 function hm(s){const p=s.split(':').map(Number);return (p[0]%12||12)+':'+pad(p[1]);}
-function ap(s){return Number(s.split(':')[0])<12?'AM':'PM';}
+function ap(s){return Number(s.split(':')[0])<12?L('am'):L('pm');}
 function t12(s){return hm(s)+' '+ap(s);}
 const H2=t=>'<h2>'+t+'</h2>';
 
+/* ---------- language ----------
+   Every visible string lives here. Add a language by adding a block with
+   the same keys; the button in the header switches between them.
+   Values in PLANNER_CONFIG may be a plain string or {en:'…',ar:'…'}. */
+const LANGS={ar:'العربية',en:'English'};
+const L10N={
+ar:{
+  dir:'rtl',locale:'ar-EG-u-nu-latn',switchTo:'English',
+  appName:'مخطط المذاكرة',nav:'التنقل',
+  credit:'تطوير <b>م. عبدالغني سعيد</b>',
+  noStore:'المتصفح ده مش بيحفظ البيانات (يمكن التصفح الخفي مفعّل). البيانات هتتمسح لما تقفل الصفحة.',
+  tab_today:'اليوم',tab_week:'الأسبوع',tab_tasks:'المهام',tab_review:'المراجعة',tab_subjects:'المواد',tab_progress:'التقدم',tab_poll:'التصويت',
+  days:['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],
+  daysShort:['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'],
+  am:'ص',pm:'م',
+  LEC:'محاضرة',LAB:'عملي',TUT:'سكشن',
+  Assignment:'تكليف',Tutorial:'سكشن',Lab:'عملي',Quiz:'اختبار قصير',Other:'أخرى',
+  steps:{LEC:['قريت السلايدات سريعًا','حضرت','عملت ملخص (15 دقيقة)'],
+         LAB:['جهزت ورقة المعمل','حضرت','خلّصت التقرير أو الكود'],
+         TUT:['حليت المسائل قبلها','حضرت','راجعت أخطائي']},
+  joined:'دخلت أونلاين',
+  reviewBlock:'خلّص المراجعات المستحقة (10 دقائق)',
+  online:'أونلاين',onCampus:'في الكلية',
+  daySpan:'{0} من {1} إلى {2} ({3})',
+  noSessionsShort:'مفيش محاضرات.',noSessionsToday:'مفيش محاضرات في اليوم ده.',noSessions:'مفيش محاضرات',noScheduled:'مفيش محاضرات في الجدول',
+  now:'دلوقتي',next:'الجاي',
+  addTopic:'ضيف موضوع للمراجعة',
+  prev:'السابق',todayBtn:'اليوم',nextBtn:'التالي',changeDay:'تغيير اليوم',
+  doneOf:'خلّصت {0} من {1}',
+  weeklyPace:'إيقاع الأسبوع',
+  sessions:'المحاضرات',studyPlan:'خطة المذاكرة',
+  revDue:'{0} مستحقة',tasksDue:'{0} محتاجة تبدأ أو متأخرة',pollOpen:'التصويت مفتوح: سكاشن الدعم',
+  weekRange:'{0} إلى {1}، {2}% مكتمل',openDay:'افتح اليوم',
+  tasksSub:'كل مهمة ليها تاريخ بداية قبل التسليم، 3 أيام افتراضيًا.',
+  newTask:'مهمة جديدة',title:'العنوان',titleEg:'مثال: تكليف 1',course:'المادة',type:'النوع',
+  deadline:'موعد التسليم',leadDays:'تبدأ قبلها بكام يوم',addTask:'ضيف المهمة',
+  open:'مفتوحة',completed:'مكتملة',noOpenTasks:'مفيش مهام مفتوحة.',
+  markDone:'علّم كمنتهية',del:'مسح',due:'التسليم {0}',
+  overdueBy:'متأخرة {0}',dueToday:'التسليم النهاردة',timeToStart:'وقت البداية، فاضل {0}',startsIn:'تبدأ بعد {0} ({1})',
+  reviewSub:'المواضيع بترجع للمراجعة بعد 1 و3 و7 و14 و30 يوم.',
+  newTopic:'موضوع جديد',topic:'الموضوع',topicEg:'مثال: الحلقات',addToReview:'ضيف للمراجعة',
+  dueTodayH:'مستحقة النهاردة',upcoming:'قادمة',nothingDue:'مفيش حاجة مستحقة النهاردة.',noTopics:'مفيش مواضيع لسه.',
+  reviewN:'المراجعة {0} من {1}',markReviewed:'راجعتها',forgotIt:'نسيتها',
+  mastered:'مواضيع اتقنتها: {0} (خلّصت الـ5 مراجعات).',
+  coursesSub:'{0} مواد، {1} محاضرة في الأسبوع.',notes:'ملاحظات',notesFor:'ملاحظات {0}',
+  dataBackup:'البيانات والنسخ الاحتياطي',
+  dataHint:'البيانات محفوظة في المتصفح ده، وبتتزامن مع حسابك لما تسجّل دخول، وتقدر تصدّرها كنسخة احتياطية.',
+  exportB:'تصدير نسخة',importB:'استعادة نسخة',eraseB:'مسح كل البيانات',
+  noData:'مفيش بيانات لسه',justStarted:'البداية',ahead:'متقدم',onTrack:'ماشي صح',slightlyBehind:'متأخر شوية',behind:'متأخر',
+  good:'كويس',fair:'مقبول',low:'ضعيف',improving:'بيتحسن',declining:'بينزل',stable:'ثابت',
+  progressSub:'الإيقاع بيقارن اللي خلّصته باللي الجدول طالبه لحد دلوقتي: تحضير وحضور وملخصات وبلوكات المذاكرة.',
+  doneItems:'خلّصت {0} من {1} من المطلوب لحد دلوقتي.',noItemsYet:'مفيش مطلوب لسه.',
+  vsLastWeek:'مقارنة بالأسبوع اللي فات ({0}%): {1}%',
+  attendance:'الحضور',attendedOf:'حضرت {0} من {1} محاضرة لحد دلوقتي',noSessionsWeek:'مفيش محاضرات بدأت الأسبوع ده',
+  reviewsT:'المراجعات',dueUnit:'مستحقة',activeTopics:'مواضيع نشطة: {0}',
+  tasksT:'المهام',openUnit:'مفتوحة',upToDate:'كله متابَع',onSchedule:'في الموعد',
+  nOverdue:'{0} متأخرة',nToStart:'{0} محتاجة تبدأ',
+  streak:'المواظبة',streakHint:'اليوم بيتحسب لو خلّصت 70% أو أكتر',strong:'قوية',short:'قصيرة',broken:'اتقطعت',
+  dailyActivity:'النشاط اليومي',last4:'آخر 4 أسابيع',courseProgress:'تقدم المواد',indicators:'المؤشرات',settings:'الإعدادات',
+  current:'الحالي',weekOf:'أسبوع {0}',
+  legendGood:'متقدم، كويس، بيتحسن',legendBehind:'متأخر، ضعيف، بينزل',
+  trackingSince:'المتابعة من تاريخ',trackingHint:'المؤشرات بتتحسب من التاريخ ده.',
+  pollSub:'صوت واحد لكل طالب. تقدر تغيّره بعدين.',
+  pollNotAnon:'التصويت ده مش مجهول. صوتك متخزن باسم حسابك وأي طالب مسجّل دخول يقدر يشوف مين صوّت بإيه.',
+  pollSignIn:'سجّل دخول عشان تشارك في التصويت.',pollLoad:'جاري تحميل التصويت…',pollErr:'تعذر تحميل التصويت.',
+  pollQ:'تفتكر سكاشن الدعم تبقى إجبارية لكل المجموعات؟',yes:'نعم',no:'لا',
+  supportSessions:'سكاشن الدعم',pickGroup:'اختار مجموعتك',group:'مجموعة',
+  groupHint:'فيه {0} مجموعة. عندك صوت واحد وبيتحسب للمجموعة اللي تختارها.',
+  saving:'جاري الحفظ…',updateVote:'عدّل الصوت',submitVote:'أرسل الصوت',cancel:'إلغاء',
+  voteHint:'تقدر تغيّر صوتك في أي وقت. آخر صوت بس هو اللي بيتحسب.',
+  voteRecorded:'صوتك اتسجل',votedYes:'صوّت بنعم للمجموعة {0}.',votedNo:'صوّت بلا.',changeVote:'غيّر صوتك',
+  resultsAfter:'النتائج بتظهر بعد ما تصوّت.',results:'النتائج',yesByGroup:'أصوات نعم حسب المجموعة',
+  yesNoAria:'نعم {0} بالمئة، لا {1} بالمئة',
+  pollNotReady:'التصويت مش جاهز لسه.',voteUpdated:'الصوت اتعدّل',voteSubmitted:'الصوت اتسجل',
+  voteFailRules:'الصوت ما اتسجلش. اتأكد إن قواعد التصويت المحدّثة منشورة في Firebase.',
+  voteFailNet:'الصوت ما اتسجلش. راجع الاتصال وحاول تاني.',
+  thisWeek:'الأسبوع ده {0}%',
+  stIdle:'مش مسجّل دخول',stSyncing:'جاري المزامنة…',stSaving:'جاري الحفظ…',stSynced:'محدّث',
+  stOffline:'بدون إنترنت. التغييرات محفوظة على الجهاز ده.',stDenied:'الحفظ فشل. راجع قواعد Firestore.',stError:'خطأ في المزامنة.',
+  account:'الحساب',accountOf:'الحساب: {0}',signOut:'تسجيل الخروج',syncNow:'زامن دلوقتي',close:'إغلاق',
+  tryAgain:'حاول تاني',checkingAcct:'بنتأكد من حسابك…',
+  signIn:'تسجيل الدخول',createAccount:'إنشاء حساب',signInSub:'سجّل دخول عشان خطتك تتزامن على كل أجهزتك.',
+  name:'الاسم',email:'البريد الإلكتروني',password:'كلمة السر',forgotPw:'نسيت كلمة السر؟',
+  orContinue:'أو كمّل بـ',notConfigured:'Firebase مش متظبط. راجع قسم FIREBASE SETTINGS في أول الملف.',
+  enterEmailFirst:'اكتب بريدك الإلكتروني الأول.',enterEmailPw:'اكتب البريد الإلكتروني وكلمة السر.',
+  authNotReady:'خدمة تسجيل الدخول مش جاهزة لسه.',
+  topicPrompt:'اسم الموضوع:',addedReview:'اتضاف للمراجعة. أول مراجعة بكرة.',
+  allReviewsDone:'خلّصت كل مراجعات الموضوع ده.',comesBack:'الموضوع ده هيرجع بكرة.',
+  confirmReset:'ده هيمسح كل البيانات المحفوظة، بما فيها بيانات الحساب المتزامنة. تكمّل؟',
+  backupRestored:'النسخة اترجعت',badBackup:'الملف ده مش نسخة احتياطية صالحة.',taskAdded:'المهمة اتضافت',
+  u_day:['يوم','يوم واحد','يومان','{0} أيام','{0} يومًا'],
+  u_session:['محاضرة','محاضرة واحدة','محاضرتان','{0} محاضرات','{0} محاضرة'],
+  u_review:['مراجعة','مراجعة واحدة','مراجعتان','{0} مراجعات','{0} مراجعة'],
+  u_task:['مهمة','مهمة واحدة','مهمتان','{0} مهام','{0} مهمة'],
+  u_openTask:['مهمة مفتوحة','مهمة مفتوحة','مهمتان مفتوحتان','{0} مهام مفتوحة','{0} مهمة مفتوحة'],
+  u_overdueReview:['مراجعة متأخرة','مراجعة متأخرة','مراجعتان متأخرتان','{0} مراجعات متأخرة','{0} مراجعة متأخرة'],
+  u_overdueTask:['مهمة متأخرة','مهمة متأخرة','مهمتان متأخرتان','{0} مهام متأخرة','{0} مهمة متأخرة'],
+  u_vote:['صوت','صوت واحد','صوتان','{0} أصوات','{0} صوتًا']
+},
+en:{
+  dir:'ltr',locale:'en-GB',switchTo:'العربية',
+  appName:'Study Planner',nav:'Main',
+  credit:'Developed by <b>Eng. Abdulghani Saeed</b>',
+  noStore:'Data cannot be saved in this browser (private mode may be on). It will be cleared when you close the page.',
+  tab_today:'Today',tab_week:'Week',tab_tasks:'Tasks',tab_review:'Review',tab_subjects:'Courses',tab_progress:'Progress',tab_poll:'Poll',
+  days:['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+  daysShort:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+  am:'AM',pm:'PM',
+  LEC:'Lecture',LAB:'Lab',TUT:'Tutorial',
+  Assignment:'Assignment',Tutorial:'Tutorial',Lab:'Lab',Quiz:'Quiz',Other:'Other',
+  steps:{LEC:['Skimmed the slides','Attended','Summarized (15 min)'],
+         LAB:['Prepared the lab sheet','Attended','Finished the report or code'],
+         TUT:['Solved problems beforehand','Attended','Reviewed my mistakes']},
+  joined:'Joined online',
+  reviewBlock:'Complete the reviews that are due (10 min)',
+  online:'Online',onCampus:'On campus',
+  daySpan:'{0} from {1} to {2} ({3})',
+  noSessionsShort:'No sessions.',noSessionsToday:'No sessions on this day.',noSessions:'No sessions',noScheduled:'No scheduled sessions',
+  now:'Now',next:'Next',
+  addTopic:'Add a topic to review',
+  prev:'Previous',todayBtn:'Today',nextBtn:'Next',changeDay:'Change day',
+  doneOf:'{0} of {1} done',
+  weeklyPace:'Weekly pace',
+  sessions:'Sessions',studyPlan:'Study plan',
+  revDue:'{0} due',tasksDue:'{0} to start or overdue',pollOpen:'Poll open: support sessions',
+  weekRange:'{0} to {1}, {2}% complete',openDay:'Open day',
+  tasksSub:'Each task gets a start date ahead of its deadline, 3 days by default.',
+  newTask:'New task',title:'Title',titleEg:'e.g. Assignment 1',course:'Course',type:'Type',
+  deadline:'Deadline',leadDays:'Start days before',addTask:'Add task',
+  open:'Open',completed:'Completed',noOpenTasks:'No open tasks.',
+  markDone:'Mark done',del:'Delete',due:'Due {0}',
+  overdueBy:'Overdue by {0}',dueToday:'Due today',timeToStart:'Time to start, {0} left',startsIn:'Starts in {0} ({1})',
+  reviewSub:'Topics come back for review after 1, 3, 7, 14 and 30 days.',
+  newTopic:'New topic',topic:'Topic',topicEg:'e.g. Loops',addToReview:'Add to review',
+  dueTodayH:'Due today',upcoming:'Upcoming',nothingDue:'Nothing is due today.',noTopics:'No topics added yet.',
+  reviewN:'review {0} of {1}',markReviewed:'Mark reviewed',forgotIt:'Forgot it',
+  mastered:'Mastered topics: {0} (all 5 reviews completed).',
+  coursesSub:'{0} courses, {1} sessions per week.',notes:'Notes',notesFor:'Notes for {0}',
+  dataBackup:'Data and backup',
+  dataHint:'Data is saved in this browser, synced to your account when you are signed in, and can be exported as a backup file.',
+  exportB:'Export backup',importB:'Restore backup',eraseB:'Erase all data',
+  noData:'No data yet',justStarted:'Just started',ahead:'Ahead',onTrack:'On track',slightlyBehind:'Slightly behind',behind:'Behind',
+  good:'Good',fair:'Fair',low:'Low',improving:'Improving',declining:'Declining',stable:'Stable',
+  progressSub:'Pace compares completed items with what the schedule requires so far: preparation, attendance, summaries and study blocks.',
+  doneItems:'Completed {0} of {1} required items so far.',noItemsYet:'No required items yet.',
+  vsLastWeek:'Compared with last week ({0}%): {1}%',
+  attendance:'Attendance',attendedOf:'Attended {0} of {1} sessions so far',noSessionsWeek:'No sessions have started this week',
+  reviewsT:'Reviews',dueUnit:'due',activeTopics:'Active topics: {0}',
+  tasksT:'Tasks',openUnit:'open',upToDate:'Up to date',onSchedule:'On schedule',
+  nOverdue:'{0} overdue',nToStart:'{0} to start',
+  streak:'Streak',streakHint:'A day counts at 70% or more done',strong:'Strong',short:'Short',broken:'Broken',
+  dailyActivity:'Daily activity',last4:'Last 4 weeks',courseProgress:'Course progress',indicators:'Indicators',settings:'Settings',
+  current:'Current',weekOf:'Week of {0}',
+  legendGood:'Ahead, good, improving',legendBehind:'Behind, low, declining',
+  trackingSince:'Tracking since',trackingHint:'Indicators are calculated from this date.',
+  pollSub:'One vote per student. You can change your vote later.',
+  pollNotAnon:'This poll is not anonymous. Your vote is stored under your account and other signed-in students can see who voted for what.',
+  pollSignIn:'Sign in to take part in the poll.',pollLoad:'Loading the poll…',pollErr:'Could not load the poll.',
+  pollQ:'Do you think support sessions should be mandatory for all groups?',yes:'Yes',no:'No',
+  supportSessions:'Support sessions',pickGroup:'Select your group',group:'Group',
+  groupHint:'There are {0} groups. You have one vote, and it counts for the group you select.',
+  saving:'Saving…',updateVote:'Update vote',submitVote:'Submit vote',cancel:'Cancel',
+  voteHint:'You can change your vote at any time. Only your latest vote is counted.',
+  voteRecorded:'Your vote is recorded',votedYes:'You voted Yes for Group {0}.',votedNo:'You voted No.',changeVote:'Change vote',
+  resultsAfter:'Results appear after you vote.',results:'Results',yesByGroup:'Yes votes by group',
+  yesNoAria:'Yes {0} percent, No {1} percent',
+  pollNotReady:'The poll is not ready yet.',voteUpdated:'Vote updated',voteSubmitted:'Vote submitted',
+  voteFailRules:'Vote not saved. Make sure the updated poll rules are published in Firebase.',
+  voteFailNet:'Vote not saved. Check your connection and try again.',
+  thisWeek:'This week {0}%',
+  stIdle:'Not signed in',stSyncing:'Syncing…',stSaving:'Saving…',stSynced:'Up to date',
+  stOffline:'Offline. Changes are saved on this device.',stDenied:'Save failed. Check your Firestore rules.',stError:'Sync error.',
+  account:'Account',accountOf:'Account: {0}',signOut:'Sign out',syncNow:'Sync now',close:'Close',
+  tryAgain:'Try again',checkingAcct:'Checking your account…',
+  signIn:'Sign in',createAccount:'Create account',signInSub:'Sign in to sync your plan across devices.',
+  name:'Name',email:'Email',password:'Password',forgotPw:'Forgot password?',
+  orContinue:'or continue with',notConfigured:'Firebase is not configured. See the FIREBASE SETTINGS section at the top of this file.',
+  enterEmailFirst:'Enter your email address first.',enterEmailPw:'Enter your email address and password.',
+  authNotReady:'The sign-in service is not ready yet.',
+  topicPrompt:'Topic name:',addedReview:'Added to review. The first review is tomorrow.',
+  allReviewsDone:'All reviews for this topic are complete.',comesBack:'This topic will come back tomorrow.',
+  confirmReset:'This erases all saved data, including synced account data. Continue?',
+  backupRestored:'Backup restored',badBackup:'That file is not a valid backup.',taskAdded:'Task added',
+  u_day:['day','{0} day','{0} days'],
+  u_session:['session','{0} session','{0} sessions'],
+  u_review:['review','{0} review','{0} reviews'],
+  u_task:['task','{0} task','{0} tasks'],
+  u_openTask:['open task','{0} open task','{0} open tasks'],
+  u_overdueReview:['overdue review','{0} overdue review','{0} overdue reviews'],
+  u_overdueTask:['overdue task','{0} overdue task','{0} overdue tasks'],
+  u_vote:['vote','{0} vote','{0} votes']
+}};
+const KEY='abdelghani-planner-v1';
+const LANG_KEY=KEY+'-lang';
+let lang=(function(){try{const v=localStorage.getItem(LANG_KEY);if(L10N[v])return v;}catch(e){}return 'ar';})();
+const fill=(str,a)=>{let x=String(str);a.forEach((v,i)=>{x=x.split('{'+i+'}').join(v);});return x;};
+/* L('key', …values) returns the string for the current language. */
+function L(k){
+  const d=L10N[lang]||L10N.en;
+  let v=d[k];if(v===undefined)v=L10N.en[k];if(v===undefined)return k;
+  return fill(v,Array.prototype.slice.call(arguments,1));
+}
+/* Arabic counts differently from English, so units carry their own forms. */
+const RAW=k=>{const d=L10N[lang]||L10N.en;return d[k]!==undefined?d[k]:L10N.en[k];};
+function pl(n,unit){
+  const f=(L10N[lang]||L10N.en)['u_'+unit]||L10N.en['u_'+unit];
+  if(!f)return n+' '+unit;
+  if(lang==='ar'){
+    if(n===1)return f[1];
+    if(n===2)return f[2];
+    const m=n%100;
+    return fill(m>=3&&m<=10?f[3]:f[4],[n]);
+  }
+  return fill(n===1?f[1]:f[2],[n]);
+}
+/* Config values may be a plain string or {en:'…',ar:'…'}. */
+const loc=v=>(v&&typeof v==='object'&&!Array.isArray(v))?(v[lang]!==undefined?v[lang]:(v.en!==undefined?v.en:'')):(v===undefined?'':v);
+
 /* ---------- data ---------- */
-const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const DAYS_S=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const ORDER=[6,0,1,2,3,4,5];
-const TYPE={LEC:'Lecture',LAB:'Lab',TUT:'Tutorial'};
+const dayName=i=>RAW('days')[i];
+const dayShort=i=>RAW('daysShort')[i];
+const TYPE_KEYS=['Assignment','Tutorial','Lab','Quiz','Other'];
 const LEGACY_TYPE={'مهمة':'Assignment','سكشن':'Tutorial','عملي':'Lab','اختبار قصير':'Quiz','أخرى':'Other'};
 const taskType=t=>LEGACY_TYPE[t]||t;
-const GROUPS=16;
-const SUBJ={
-  CF117:{name:'Introduction to Programming',short:'Programming',color:'#3f63e0'},
-  BS114:{name:'Physics & Electronics',short:'Physics & Electronics',color:'#0f8f83'},
-  UR112:{name:'Introduction to Computers',short:'Intro to Computers',color:'#c98410'},
-  BS113:{name:'English Language (1)',short:'English',color:'#cf3f55'},
-  UR113:{name:'Entrepreneurship and Innovation',short:'Entrepreneurship',color:'#8355d6'},
-  UR111:{name:'Human Rights',short:'Human Rights',color:'#2e9450'},
-  BS116:{name:'Mathematics (1): Calculus for Computing Sciences',short:'Calculus',color:'#cc4593'}
-};
-const SESS=[
-  {id:'sat-cf-lab',day:6,start:'10:40',end:'12:20',sub:'CF117',type:'LAB',mode:'onsite',place:'B1.1',who:'TA Mai Sherif, Abdallah Mahmod'},
-  {id:'sat-bs114-lab',day:6,start:'12:30',end:'14:05',sub:'BS114',type:'LAB',mode:'onsite',place:'Physics lab 2',who:'TA Omar Alaa, Ahmed Nashaat'},
-  {id:'sat-ur112-lab',day:6,start:'14:10',end:'14:55',sub:'UR112',type:'LAB',mode:'onsite',place:'B 0.2',who:'TA Mona Mohamed, Rawan Nagy'},
-  {id:'sat-ur112-tu',day:6,start:'15:00',end:'15:45',sub:'UR112',type:'TUT',mode:'onsite',place:'B 0.2',who:'TA Mona Mohamed, Rawan Nagy'},
-  {id:'sun-bs113-tut',day:0,start:'09:00',end:'10:35',sub:'BS113',type:'TUT',mode:'online',who:'Dr. Dina'},
-  {id:'sun-ur113-lec',day:0,start:'10:40',end:'11:25',sub:'UR113',type:'LEC',mode:'online',who:'Dr. Romany'},
-  {id:'mon-bs113-lec',day:1,start:'09:00',end:'10:35',sub:'BS113',type:'LEC',mode:'online',who:'Dr. Dina'},
-  {id:'mon-ur111-lec',day:1,start:'10:40',end:'11:25',sub:'UR111',type:'LEC',mode:'online',who:'Dr. Islam Mohamed Abdelqawee'},
-  {id:'wed-ur112-lec',day:3,start:'09:00',end:'10:35',sub:'UR112',type:'LEC',mode:'onsite',place:'Hall A 1.1',who:'Dr. Ahmed S. Salama'},
-  {id:'thu-cf-lec',day:4,start:'09:00',end:'10:35',sub:'CF117',type:'LEC',mode:'onsite',place:'Hall A 0.1',who:'Dr. Shimaa'},
-  {id:'thu-bs116-tu',day:4,start:'10:40',end:'12:20',sub:'BS116',type:'TUT',mode:'onsite',place:'B.Class room 3',who:'Renal Hany'},
-  {id:'thu-bs114-lec',day:4,start:'12:30',end:'14:05',sub:'BS114',type:'LEC',mode:'onsite',place:'Hall A 2.1',who:'Dr. Romany'},
-  {id:'thu-bs116-lec',day:4,start:'14:10',end:'15:45',sub:'BS116',type:'LEC',mode:'onsite',place:'Hall A1.1',who:'Dr. Muhammed Elsayed'}
-];
-const BLOCKS={
-  6:['Review lab work and finish the report or code (30 min)','Prepare the English tutorial (15 min)','Get ready for the Sunday online classes (9:00 AM)'],
-  0:['Review Entrepreneurship and English (30 min)','Math: weekly problem set (90 min)','CF117: coding practice (45 min)'],
-  1:['Review English and Human Rights (30 min)','Physics & Electronics (90 min)','CF117: coding practice (45 min)'],
-  2:['CF117: programming and practice (2 hours)','Math (90 min)','Review UR112 and Physics (40 min)','Catch up on overdue tasks'],
-  3:['Review UR112 (20 min)','Prepare the Thursday sessions: CF117, BS114, BS116 (45 min)','Solve Math problems before the tutorial (60 min)'],
-  4:['Summarize the four sessions and note questions (40 min)'],
-  5:['Prepare the three Saturday labs (60 to 75 min)','Weekly review and self-test for each course (40 min)','Plan next week and organize tasks (15 min)']
-};
-const STEPS={
-  LEC:['Skimmed the slides','Attended','Summarized (15 min)'],
-  LAB:['Prepared the lab sheet','Attended','Finished the report or code'],
-  TUT:['Solved problems beforehand','Attended','Reviewed my mistakes']
-};
-const NO_CLASS={
-  2:'No sessions today. Use the day for programming, math and review.',
-  5:'No sessions today. Prepare the Saturday labs and plan the week.'
-};
-const INTERVALS=[1,3,7,14,30];
-const KEY='abdelghani-planner-v1';
+const typeLabel=t=>L(taskType(t));
+const CONF=window.PLANNER_CONFIG||{};
+const GROUPS=CONF.groups||16;
+const SUBJ=CONF.subjects||{};
+const SESS=(CONF.sessions||[]).slice();
+const BLOCKS=CONF.blocks||{};
+const NO_CLASS=CONF.noClassNotes||{};
+const INTERVALS=CONF.reviewIntervals||[1,3,7,14,30];
+const KEEP_DAYS=Math.max(14,parseInt(CONF.keepChecksDays,10)||120);
 
-/* ---------- state ---------- */
-const defaults=()=>({checks:{},tasks:[],reviews:[],notes:{},since:iso(today0()),updatedAt:0});
+/* ---------- state ----------
+   Every change carries a timestamp so two devices can be merged item by
+   item instead of one of them overwriting the other.
+     checks[key]    when the box was ticked
+     xchecks[key]   when it was un-ticked (kept so the tick does not come back)
+     tasks/reviews  each item has upd (last change) and del (deleted at)
+     noteAt[code]   when that course note was last edited
+*/
+const now=()=>Date.now();
+const newId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const defaults=()=>({checks:{},xchecks:{},tasks:[],reviews:[],notes:{},noteAt:{},since:iso(today0()),updatedAt:0});
 function readKey(k){try{const raw=localStorage.getItem(k);return raw?JSON.parse(raw):null;}catch(e){return null;}}
-function load(k){const o=readKey(k);if(!o)return defaults();const r=Object.assign(defaults(),o);if(!r.since)r.since=iso(today0());return r;}
+const tsOf=v=>v===true?1:(typeof v==='number'&&v>0?v:0);
+function prune(r){
+  /* Drop ticks and tombstones that are too old to matter, so the saved
+     document does not grow for ever. */
+  const cut=iso(addDays(today0(),-KEEP_DAYS)),old=now()-KEEP_DAYS*86400000;
+  ['checks','xchecks'].forEach(f=>{
+    const m=r[f]||{};Object.keys(m).forEach(k=>{if(k.slice(0,10)<cut)delete m[k];});
+  });
+  r.tasks=(r.tasks||[]).filter(t=>!(t.del&&t.del<old));
+  r.reviews=(r.reviews||[]).filter(x=>!(x.del&&x.del<old));
+  return r;
+}
+function load(k){
+  const o=readKey(k);if(!o)return defaults();
+  const r=Object.assign(defaults(),o);
+  if(!r.since)r.since=iso(today0());
+  return prune(r);
+}
+/* Item-level merge. Used both when signing in and on every update that
+   arrives from another device. Newer change wins per item, not per file. */
+function mergeState(a,b){
+  const r=defaults();
+  const keys=new Set([].concat(Object.keys(a.checks||{}),Object.keys(b.checks||{}),Object.keys(a.xchecks||{}),Object.keys(b.xchecks||{})));
+  keys.forEach(k=>{
+    const on=Math.max(tsOf((a.checks||{})[k]),tsOf((b.checks||{})[k]));
+    const off=Math.max(tsOf((a.xchecks||{})[k]),tsOf((b.xchecks||{})[k]));
+    if(on&&on>=off)r.checks[k]=on;else if(off)r.xchecks[k]=off;
+  });
+  const byId=(f)=>{
+    const mp=new Map();
+    [].concat(a[f]||[],b[f]||[]).forEach(i=>{
+      if(!i||!i.id)return;
+      const cur=mp.get(i.id);
+      if(!cur||(i.upd||0)>(cur.upd||0)||((i.upd||0)===(cur.upd||0)&&i.del))mp.set(i.id,i);
+    });
+    return Array.from(mp.values());
+  };
+  r.tasks=byId('tasks');r.reviews=byId('reviews');
+  Object.keys(SUBJ).forEach(c=>{
+    const ta=tsOf((a.noteAt||{})[c]),tb=tsOf((b.noteAt||{})[c]);
+    const src=ta>=tb?a:b,t=Math.max(ta,tb);
+    if((src.notes||{})[c]!==undefined){r.notes[c]=src.notes[c];if(t)r.noteAt[c]=t;}
+  });
+  r.since=(a.since||b.since);
+  r.updatedAt=Math.max(a.updatedAt||0,b.updatedAt||0,now());
+  return prune(r);
+}
 const cloud={configured:false,ready:false,user:null,status:'idle',err:''};
 const CFG=window.FIREBASE_CONFIG||{};
 cloud.configured=!!(CFG.apiKey&&CFG.projectId&&!/^PASTE/i.test(CFG.apiKey)&&!/^PASTE/i.test(CFG.projectId));
@@ -525,12 +862,12 @@ let viewDate=today0();
 
 /* ---------- derived ---------- */
 const sessOf=dow=>SESS.filter(s=>s.day===dow).sort((a,b)=>a.start.localeCompare(b.start));
-const blockList=dow=>(BLOCKS[dow]||[]).concat(['Complete the reviews that are due (10 min)']);
+const blockList=dow=>(BLOCKS[dow]||[]).map(loc).concat([L('reviewBlock')]);
 function dayLine(dow){
   const ss=sessOf(dow);
-  if(!ss.length)return NO_CLASS[dow]||'No sessions.';
+  if(!ss.length)return loc(NO_CLASS[dow])||L('noSessionsShort');
   const on=ss.every(x=>x.mode==='online'),n=ss.length;
-  return (on?'Online':'On campus')+' from '+t12(ss[0].start)+' to '+t12(ss[n-1].end)+' ('+plural(n,'session')+')';
+  return L('daySpan',on?L('online'):L('onCampus'),t12(ss[0].start),t12(ss[n-1].end),pl(n,'session'));
 }
 function dayStats(d){
   const k=iso(d),dow=d.getDay();let total=0,done=0;
@@ -539,19 +876,21 @@ function dayStats(d){
   return {total,done};
 }
 function weekStart(){const t=today0();return addDays(t,-((t.getDay()+1)%7));}
-const activeRev=()=>S.reviews.filter(r=>!r.done);
+const TASKS=()=>S.tasks.filter(t=>!t.del);
+const REVS=()=>S.reviews.filter(r=>!r.del);
+const activeRev=()=>REVS().filter(r=>!r.done);
 const dueRev=()=>activeRev().filter(r=>diffDays(parse(r.due),today0())<=0);
 function taskInfo(t){
   const T=today0(),dl=parse(t.deadline),left=diffDays(dl,T),start=addDays(dl,-t.lead),startIn=diffDays(start,T);
   let cls,txt;
-  if(left<0){cls='bad';txt='Overdue by '+plural(-left,'day');}
-  else if(startIn<=0){cls=left<=2?'bad':'warn';txt=left===0?'Due today':'Time to start, '+plural(left,'day')+' left';}
-  else{cls='ok';txt='Starts in '+plural(startIn,'day')+' ('+fmtDate(start)+')';}
+  if(left<0){cls='bad';txt=L('overdueBy',pl(-left,'day'));}
+  else if(startIn<=0){cls=left<=2?'bad':'warn';txt=left===0?L('dueToday'):L('timeToStart',pl(left,'day'));}
+  else{cls='ok';txt=L('startsIn',pl(startIn,'day'),fmtDate(start));}
   return {left,cls,txt};
 }
-const urgentTasks=()=>S.tasks.filter(t=>!t.done&&taskInfo(t).cls!=='ok');
+const urgentTasks=()=>TASKS().filter(t=>!t.done&&taskInfo(t).cls!=='ok');
 const pollOpen=()=>!!cloud.user&&poll.status==='ready'&&!poll.mine;
-const subjOpts=()=>Object.keys(SUBJ).map(c=>'<option value="'+c+'">'+c+' '+esc(SUBJ[c].short)+'</option>').join('');
+const subjOpts=()=>Object.keys(SUBJ).map(c=>'<option value="'+c+'">'+c+' '+esc(loc(SUBJ[c].short))+'</option>').join('');
 function chk(key,label,cls){
   return '<label class="chk '+(cls||'')+'"><input type="checkbox" data-k="'+key+'" '+(S.checks[key]?'checked':'')+'><span class="box"></span><span class="lbl">'+esc(label)+'</span></label>';
 }
@@ -565,33 +904,33 @@ function viewToday(){
     const sub=SUBJ[s.sub],a=s.start.split(':').map(Number),b=s.end.split(':').map(Number);
     let tag='';
     if(isToday){
-      if(nowM>=a[0]*60+a[1]&&nowM<b[0]*60+b[1])tag='<span class="tag now">Now</span>';
-      else if(nowM<a[0]*60+a[1]&&!nextFound){tag='<span class="tag next">Next</span>';nextFound=true;}
+      if(nowM>=a[0]*60+a[1]&&nowM<b[0]*60+b[1])tag='<span class="tag now">'+L('now')+'</span>';
+      else if(nowM<a[0]*60+a[1]&&!nextFound){tag='<span class="tag next">'+L('next')+'</span>';nextFound=true;}
     }
-    const labels=STEPS[s.type].slice();if(s.mode==='online')labels[1]='Joined online';
+    const labels=RAW('steps')[s.type].slice();if(s.mode==='online')labels[1]=L('joined');
     const steps=labels.map((l,i)=>chk(k+'|s|'+s.id+'|'+i,l)).join('');
-    const where=s.mode==='online'?'Online':esc(s.place);
+    const where=s.mode==='online'?L('online'):esc(loc(s.place));
     return '<div class="slot" style="--c:'+sub.color+'">'+
       '<div class="gut"><b>'+t12(s.start)+'</b>'+t12(s.end)+'</div>'+
-      '<div class="sbody"><h3><span class="code">'+s.sub+'</span><span class="nm">'+esc(sub.short)+'</span><span class="tag">'+TYPE[s.type]+'</span>'+tag+'</h3>'+
-      '<div class="meta"><span>'+where+'</span><span>'+esc(s.who)+'</span></div>'+
+      '<div class="sbody"><h3><span class="code">'+s.sub+'</span><span class="nm">'+esc(loc(sub.short))+'</span><span class="tag">'+L(s.type)+'</span>'+tag+'</h3>'+
+      '<div class="meta"><span>'+where+'</span><span>'+esc(loc(s.who))+'</span></div>'+
       '<div class="steps">'+steps+'</div>'+
-      '<button class="link" data-act="addrev" data-sub="'+s.sub+'">Add a topic to review</button></div></div>';
+      '<button class="link" data-act="addrev" data-sub="'+s.sub+'">'+L('addTopic')+'</button></div></div>';
   }).join('');
   const blocks=blockList(dow).map((b,i)=>chk(k+'|b|'+i,b)).join('');
   const dr=dueRev().length,ut=urgentTasks().length;
   let al='';
-  if(dr)al+='<button class="alert" data-act="tab" data-v="review">'+plural(dr,'review')+' due</button>';
-  if(ut)al+='<button class="alert bad" data-act="tab" data-v="tasks">'+plural(ut,'task')+' to start or overdue</button>';
-  if(pollOpen())al+='<button class="alert info" data-act="tab" data-v="poll">Poll open: support sessions</button>';
-  return '<div class="ph"><div><h1>'+DAYS[dow]+'</h1><p class="sub">'+fmtLong(d)+'. '+esc(dayLine(dow))+'</p></div>'+
-    '<div class="seg" role="group" aria-label="Change day"><button data-act="prev">Previous</button><button data-act="now">Today</button><button data-act="next">Next</button></div></div>'+
-    '<div class="daybar"><div class="bar"><i style="--p:'+pct+'%"></i></div><span class="cnt">'+st.done+' of '+st.total+' done</span>'+
-    (isToday?'<button class="trendbtn" data-act="tab" data-v="progress">'+chip(paceStatus(calcWeek(weekStart()).pace))+'<span>Weekly pace</span></button>':'')+'</div>'+
+  if(dr)al+='<button class="alert" data-act="tab" data-v="review">'+L('revDue',pl(dr,'review'))+'</button>';
+  if(ut)al+='<button class="alert bad" data-act="tab" data-v="tasks">'+L('tasksDue',pl(ut,'task'))+'</button>';
+  if(pollOpen())al+='<button class="alert info" data-act="tab" data-v="poll">'+L('pollOpen')+'</button>';
+  return '<div class="ph"><div><h1>'+dayName(dow)+'</h1><p class="sub">'+fmtLong(d)+'. '+esc(dayLine(dow))+'</p></div>'+
+    '<div class="seg" role="group" aria-label="'+L('changeDay')+'"><button data-act="prev">'+L('prev')+'</button><button data-act="now">'+L('todayBtn')+'</button><button data-act="next">'+L('nextBtn')+'</button></div></div>'+
+    '<div class="daybar"><div class="bar"><i style="--p:'+pct+'%"></i></div><span class="cnt">'+L('doneOf',st.done,st.total)+'</span>'+
+    (isToday?'<button class="trendbtn" data-act="tab" data-v="progress">'+chip(paceStatus(calcWeek(weekStart()).pace))+'<span>'+L('weeklyPace')+'</span></button>':'')+'</div>'+
     (isToday&&al?'<div class="alerts">'+al+'</div>':'')+
-    '<div class="cols two"><section class="sec">'+H2('Sessions')+
-    (ss.length?'<div class="panel">'+rows+'</div>':'<div class="panel empty">'+esc(NO_CLASS[dow]||'No sessions on this day.')+'</div>')+'</section>'+
-    '<section class="sec">'+H2('Study plan')+'<div class="panel list">'+blocks+'</div></section></div>';
+    '<div class="cols two"><section class="sec">'+H2(L('sessions'))+
+    (ss.length?'<div class="panel">'+rows+'</div>':'<div class="panel empty">'+esc(loc(NO_CLASS[dow])||L('noSessionsToday'))+'</div>')+'</section>'+
+    '<section class="sec">'+H2(L('studyPlan'))+'<div class="panel list">'+blocks+'</div></section></div>';
 }
 
 function viewWeek(){
@@ -599,12 +938,12 @@ function viewWeek(){
   const cards=ORDER.map((dow,i)=>{
     const d=addDays(ws,i),st=dayStats(d);T+=st.total;D+=st.done;
     const isT=iso(d)===iso(today0());
-    const list=sessOf(dow).map(s=>'<li style="--c:'+SUBJ[s.sub].color+'"><span class="tm">'+t12(s.start)+'</span><b class="code">'+s.sub+'</b><span class="ty">'+TYPE[s.type]+(s.mode==='online'?', online':'')+'</span></li>').join('')||'<li class="none">No sessions</li>';
-    return '<article class="panel wd'+(isT?' is-today':'')+'"><header><h3>'+DAYS[dow]+'<small>'+fmtDate(d)+'</small></h3><span class="frac">'+dayArrow(d,st)+st.done+' / '+st.total+'</span></header>'+
-      '<ul>'+list+'</ul><button class="btn sm" data-act="go" data-d="'+iso(d)+'">Open day</button></article>';
+    const list=sessOf(dow).map(s=>'<li style="--c:'+SUBJ[s.sub].color+'"><span class="tm">'+t12(s.start)+'</span><b class="code">'+s.sub+'</b><span class="ty">'+L(s.type)+(s.mode==='online'?'، '+L('online'):'')+'</span></li>').join('')||'<li class="none">'+L('noSessions')+'</li>';
+    return '<article class="panel wd'+(isT?' is-today':'')+'"><header><h3>'+dayName(dow)+'<small>'+fmtDate(d)+'</small></h3><span class="frac">'+dayArrow(d,st)+st.done+' / '+st.total+'</span></header>'+
+      '<ul>'+list+'</ul><button class="btn sm" data-act="go" data-d="'+iso(d)+'">'+L('openDay')+'</button></article>';
   }).join('');
   const p=T?Math.round(D/T*100):0;
-  return '<div class="ph"><div><h1>Week</h1><p class="sub">'+fmtDate(ws)+' to '+fmtDate(addDays(ws,6))+', '+p+'% complete</p></div></div>'+
+  return '<div class="ph"><div><h1>'+L('tab_week')+'</h1><p class="sub">'+L('weekRange',fmtDate(ws),fmtDate(addDays(ws,6)),p)+'</p></div></div>'+
     '<div class="daybar"><div class="bar"><i style="--p:'+p+'%"></i></div></div>'+
     '<div class="weekgrid">'+cards+'</div>';
 }
@@ -612,59 +951,60 @@ function viewWeek(){
 function viewTasks(){
   const item=t=>{
     const s=SUBJ[t.sub]||{color:'#888'},i=taskInfo(t);
-    return '<li class="'+(t.done?'done':'')+'" style="--c:'+s.color+'"><button class="tick" data-act="tkdone" data-id="'+esc(t.id)+'" aria-pressed="'+!!t.done+'" aria-label="Mark done"></button>'+
-      '<div><b dir="auto">'+esc(t.title)+'</b><div class="tk-meta"><span class="code"><i class="cd"></i>'+esc(t.sub)+'</span><span>'+esc(taskType(t.type))+'</span><span>Due '+fmtDate(parse(t.deadline))+'</span></div>'+
+    return '<li class="'+(t.done?'done':'')+'" style="--c:'+s.color+'"><button class="tick" data-act="tkdone" data-id="'+esc(t.id)+'" aria-pressed="'+!!t.done+'" aria-label="'+L('markDone')+'"></button>'+
+      '<div><b dir="auto">'+esc(t.title)+'</b><div class="tk-meta"><span class="code"><i class="cd"></i>'+esc(t.sub)+'</span><span>'+esc(typeLabel(t.type))+'</span><span>'+L('due',fmtDate(parse(t.deadline)))+'</span></div>'+
       (t.done?'':'<div class="st '+i.cls+'">'+i.txt+'</div>')+'</div>'+
-      '<button class="btn sm quiet" data-act="tkdel" data-id="'+esc(t.id)+'">Delete</button></li>';
+      '<button class="btn sm quiet" data-act="tkdel" data-id="'+esc(t.id)+'">'+L('del')+'</button></li>';
   };
-  const act=S.tasks.filter(t=>!t.done).sort((a,b)=>a.deadline.localeCompare(b.deadline));
-  const dn=S.tasks.filter(t=>t.done).sort((a,b)=>b.deadline.localeCompare(a.deadline));
-  return '<div class="ph"><div><h1>Tasks</h1><p class="sub">Each task gets a start date ahead of its deadline, 3 days by default.</p></div></div>'+
-    '<div class="cols side"><form class="panel form" data-form="task"><h3>New task</h3>'+
-    '<label>Title<input name="title" placeholder="e.g. Assignment 1" required></label>'+
-    '<div class="two"><label>Course<select name="sub">'+subjOpts()+'</select></label><label>Type<select name="type"><option>Assignment</option><option>Tutorial</option><option>Lab</option><option>Quiz</option><option>Other</option></select></label></div>'+
-    '<div class="two"><label>Deadline<input type="date" name="deadline" required></label><label>Start days before<input type="number" name="lead" min="1" max="30" value="3"></label></div>'+
-    '<button class="btn primary" type="submit">Add task</button></form>'+
-    '<div><section class="sec">'+H2('Open')+(act.length?'<ul class="panel rows">'+act.map(item).join('')+'</ul>':'<div class="panel empty">No open tasks.</div>')+'</section>'+
-    (dn.length?'<section class="sec">'+H2('Completed')+'<ul class="panel rows">'+dn.map(item).join('')+'</ul></section>':'')+'</div></div>';
+  const act=TASKS().filter(t=>!t.done).sort((a,b)=>a.deadline.localeCompare(b.deadline));
+  const dn=TASKS().filter(t=>t.done).sort((a,b)=>b.deadline.localeCompare(a.deadline));
+  const typeOpts=TYPE_KEYS.map(k=>'<option value="'+k+'">'+esc(L(k))+'</option>').join('');
+  return '<div class="ph"><div><h1>'+L('tab_tasks')+'</h1><p class="sub">'+L('tasksSub')+'</p></div></div>'+
+    '<div class="cols side"><form class="panel form" data-form="task"><h3>'+L('newTask')+'</h3>'+
+    '<label>'+L('title')+'<input name="title" placeholder="'+L('titleEg')+'" dir="auto" required></label>'+
+    '<div class="two"><label>'+L('course')+'<select name="sub">'+subjOpts()+'</select></label><label>'+L('type')+'<select name="type">'+typeOpts+'</select></label></div>'+
+    '<div class="two"><label>'+L('deadline')+'<input type="date" name="deadline" required></label><label>'+L('leadDays')+'<input type="number" name="lead" min="1" max="30" value="3"></label></div>'+
+    '<button class="btn primary" type="submit">'+L('addTask')+'</button></form>'+
+    '<div><section class="sec">'+H2(L('open'))+(act.length?'<ul class="panel rows">'+act.map(item).join('')+'</ul>':'<div class="panel empty">'+L('noOpenTasks')+'</div>')+'</section>'+
+    (dn.length?'<section class="sec">'+H2(L('completed'))+'<ul class="panel rows">'+dn.map(item).join('')+'</ul></section>':'')+'</div></div>';
 }
 
 function viewReview(){
   const T=today0(),act=activeRev();
   const due=act.filter(r=>diffDays(parse(r.due),T)<=0).sort((a,b)=>a.due.localeCompare(b.due));
   const up=act.filter(r=>diffDays(parse(r.due),T)>0).sort((a,b)=>a.due.localeCompare(b.due));
-  const mastered=S.reviews.filter(r=>r.done).length;
+  const mastered=REVS().filter(r=>r.done).length;
   const item=(r,isDue)=>{
     const s=SUBJ[r.sub]||{color:'#888'},late=-diffDays(parse(r.due),T);
     return '<li style="--c:'+s.color+'"><div class="rv-main"><span class="code"><i class="cd"></i>'+esc(r.sub)+'</span><b dir="auto">'+esc(r.topic)+'</b>'+
-      '<small>'+(isDue?(late>0?'Overdue by '+plural(late,'day'):'Due today'):'Due '+fmtDate(parse(r.due)))+', review '+(r.stage+1)+' of '+INTERVALS.length+'</small></div>'+
-      '<div class="rv-act">'+(isDue?'<button class="btn sm primary" data-act="rvdone" data-id="'+esc(r.id)+'">Mark reviewed</button><button class="btn sm" data-act="rvforgot" data-id="'+esc(r.id)+'">Forgot it</button>':'')+
-      '<button class="btn sm quiet" data-act="rvdel" data-id="'+esc(r.id)+'">Delete</button></div></li>';
+      '<small>'+(isDue?(late>0?L('overdueBy',pl(late,'day')):L('dueToday')):L('due',fmtDate(parse(r.due))))+'، '+L('reviewN',r.stage+1,INTERVALS.length)+'</small></div>'+
+      '<div class="rv-act">'+(isDue?'<button class="btn sm primary" data-act="rvdone" data-id="'+esc(r.id)+'">'+L('markReviewed')+'</button><button class="btn sm" data-act="rvforgot" data-id="'+esc(r.id)+'">'+L('forgotIt')+'</button>':'')+
+      '<button class="btn sm quiet" data-act="rvdel" data-id="'+esc(r.id)+'">'+L('del')+'</button></div></li>';
   };
-  return '<div class="ph"><div><h1>Review</h1><p class="sub">Topics come back for review after 1, 3, 7, 14 and 30 days.</p></div></div>'+
-    '<div class="cols side"><form class="panel form" data-form="review"><h3>New topic</h3>'+
-    '<label>Course<select name="sub">'+subjOpts()+'</select></label>'+
-    '<label>Topic<input name="topic" placeholder="e.g. Loops" required></label>'+
-    '<button class="btn primary" type="submit">Add to review</button></form>'+
-    '<div><section class="sec">'+H2('Due today')+(due.length?'<ul class="panel rows rvl">'+due.map(r=>item(r,true)).join('')+'</ul>':'<div class="panel empty">'+(act.length?'Nothing is due today.':'No topics added yet.')+'</div>')+'</section>'+
-    (up.length?'<section class="sec">'+H2('Upcoming')+'<ul class="panel rows rvl">'+up.map(r=>item(r,false)).join('')+'</ul></section>':'')+
-    (mastered?'<p class="hint" style="margin-top:14px">Mastered topics: '+mastered+' (all 5 reviews completed).</p>':'')+'</div></div>';
+  return '<div class="ph"><div><h1>'+L('tab_review')+'</h1><p class="sub">'+L('reviewSub')+'</p></div></div>'+
+    '<div class="cols side"><form class="panel form" data-form="review"><h3>'+L('newTopic')+'</h3>'+
+    '<label>'+L('course')+'<select name="sub">'+subjOpts()+'</select></label>'+
+    '<label>'+L('topic')+'<input name="topic" placeholder="'+L('topicEg')+'" dir="auto" required></label>'+
+    '<button class="btn primary" type="submit">'+L('addToReview')+'</button></form>'+
+    '<div><section class="sec">'+H2(L('dueTodayH'))+(due.length?'<ul class="panel rows rvl">'+due.map(r=>item(r,true)).join('')+'</ul>':'<div class="panel empty">'+(act.length?L('nothingDue'):L('noTopics'))+'</div>')+'</section>'+
+    (up.length?'<section class="sec">'+H2(L('upcoming'))+'<ul class="panel rows rvl">'+up.map(r=>item(r,false)).join('')+'</ul></section>':'')+
+    (mastered?'<p class="hint" style="margin-top:14px">'+L('mastered',mastered)+'</p>':'')+'</div></div>';
 }
 
 function viewSubjects(){
   const cards=Object.keys(SUBJ).map(code=>{
     const s=SUBJ[code];
     const ss=SESS.filter(x=>x.sub===code).sort((a,b)=>ORDER.indexOf(a.day)-ORDER.indexOf(b.day)||a.start.localeCompare(b.start));
-    const rv=S.reviews.filter(r=>r.sub===code&&!r.done).length,tk=S.tasks.filter(t=>t.sub===code&&!t.done).length;
-    const rows=ss.length?ss.map(x=>'<li><b>'+DAYS[x.day]+'</b><span>'+t12(x.start)+', '+TYPE[x.type]+', '+(x.mode==='online'?'Online':esc(x.place))+'</span><small>'+esc(x.who)+'</small></li>').join(''):'<li>No scheduled sessions</li>';
-    return '<article class="panel sub-card" style="--c:'+s.color+'"><h3><span class="code">'+code+'</span>'+esc(s.name)+'</h3>'+
-      '<ul>'+rows+'</ul><div class="counts"><span class="pill">'+plural(rv,'review')+'</span><span class="pill">'+plural(tk,'open task')+'</span></div>'+
-      '<textarea class="notes" data-note="'+code+'" aria-label="Notes for '+code+'" placeholder="Notes"></textarea></article>';
+    const rv=REVS().filter(r=>r.sub===code&&!r.done).length,tk=TASKS().filter(t=>t.sub===code&&!t.done).length;
+    const rows=ss.length?ss.map(x=>'<li><b>'+dayName(x.day)+'</b><span>'+t12(x.start)+'، '+L(x.type)+'، '+(x.mode==='online'?L('online'):esc(loc(x.place)))+'</span><small>'+esc(loc(x.who))+'</small></li>').join(''):'<li>'+L('noScheduled')+'</li>';
+    return '<article class="panel sub-card" style="--c:'+s.color+'"><h3><span class="code">'+code+'</span>'+esc(loc(s.name))+'</h3>'+
+      '<ul>'+rows+'</ul><div class="counts"><span class="pill">'+pl(rv,'review')+'</span><span class="pill">'+pl(tk,'openTask')+'</span></div>'+
+      '<textarea class="notes" data-note="'+code+'" dir="auto" aria-label="'+L('notesFor',code)+'" placeholder="'+L('notes')+'"></textarea></article>';
   }).join('');
-  return '<div class="ph"><div><h1>Courses</h1><p class="sub">'+Object.keys(SUBJ).length+' courses, '+SESS.length+' sessions per week.</p></div></div>'+
+  return '<div class="ph"><div><h1>'+L('tab_subjects')+'</h1><p class="sub">'+L('coursesSub',Object.keys(SUBJ).length,SESS.length)+'</p></div></div>'+
     '<div class="gridcards">'+cards+'</div>'+
-    '<section class="sec" style="margin-top:28px">'+H2('Data and backup')+'<div class="panel form"><p class="hint">Data is saved in this browser, synced to your account when you are signed in, and can be exported as a backup file.</p>'+
-    '<div class="tools"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Restore backup</button><button class="btn quiet" data-act="reset">Erase all data</button></div></div></section>';
+    '<section class="sec" style="margin-top:28px">'+H2(L('dataBackup'))+'<div class="panel form"><p class="hint">'+L('dataHint')+'</p>'+
+    '<div class="tools"><button class="btn" data-act="export">'+L('exportB')+'</button><button class="btn" data-act="import">'+L('importB')+'</button><button class="btn quiet" data-act="reset">'+L('eraseB')+'</button></div></div></section>';
 }
 
 /* ---------- progress and indicators ---------- */
@@ -673,28 +1013,28 @@ const ARROW={
   down:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
   flat:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
 };
-const NEU={cls:'neu',arrow:'flat',label:'No data yet'};
+const NEU=()=>({cls:'neu',arrow:'flat',label:L('noData')});
 function chip(st,mini){
   if(mini)return '<span class="trend mini '+st.cls+'" title="'+esc(st.label)+'" aria-label="'+esc(st.label)+'">'+ARROW[st.arrow]+'</span>';
   return '<span class="trend '+st.cls+'">'+ARROW[st.arrow]+'<span>'+esc(st.label)+'</span></span>';
 }
 function paceStatus(r){
-  if(r===null)return {cls:'neu',arrow:'flat',label:'Just started'};
-  if(r>1.02)return {cls:'ok',arrow:'up',label:'Ahead'};
-  if(r>=0.85)return {cls:'ok',arrow:'flat',label:'On track'};
-  if(r>=0.6)return {cls:'warn',arrow:'down',label:'Slightly behind'};
-  return {cls:'bad',arrow:'down',label:'Behind'};
+  if(r===null)return {cls:'neu',arrow:'flat',label:L('justStarted')};
+  if(r>1.02)return {cls:'ok',arrow:'up',label:L('ahead')};
+  if(r>=0.85)return {cls:'ok',arrow:'flat',label:L('onTrack')};
+  if(r>=0.6)return {cls:'warn',arrow:'down',label:L('slightlyBehind')};
+  return {cls:'bad',arrow:'down',label:L('behind')};
 }
 function pctStatus(p){
-  if(p===null)return NEU;
-  if(p>=85)return {cls:'ok',arrow:'up',label:'Good'};
-  if(p>=60)return {cls:'warn',arrow:'flat',label:'Fair'};
-  return {cls:'bad',arrow:'down',label:'Low'};
+  if(p===null)return NEU();
+  if(p>=85)return {cls:'ok',arrow:'up',label:L('good')};
+  if(p>=60)return {cls:'warn',arrow:'flat',label:L('fair')};
+  return {cls:'bad',arrow:'down',label:L('low')};
 }
 function deltaStatus(dl){
-  if(dl>=5)return {cls:'ok',arrow:'up',label:'Improving'};
-  if(dl<=-5)return {cls:'bad',arrow:'down',label:'Declining'};
-  return {cls:'neu',arrow:'flat',label:'Stable'};
+  if(dl>=5)return {cls:'ok',arrow:'up',label:L('improving')};
+  if(dl<=-5)return {cls:'bad',arrow:'down',label:L('declining')};
+  return {cls:'neu',arrow:'flat',label:L('stable')};
 }
 const sinceDate=()=>parse(S.since);
 function itemsOfDay(d){
@@ -757,35 +1097,35 @@ function dayArrow(d,st){
 function viewProgress(){
   const T=today0(),ws=weekStart(),m=calcWeek(ws),prev=calcWeek(addDays(ws,-7));
   const ps=paceStatus(m.pace),curPct=m.pace===null?null:Math.min(100,Math.round(m.pace*100));
-  const revs=activeRev(),openT=S.tasks.filter(t=>!t.done);
+  const revs=activeRev(),openT=TASKS().filter(t=>!t.done);
   const sign=n=>(n>0?'+':'')+n;
   let vs='';
   if(curPct!==null&&prev.pct!==null){
     const dl=curPct-prev.pct;
-    vs='<div class="row">'+chip(deltaStatus(dl))+'<span class="hint">Compared with last week ('+prev.pct+'%): '+sign(dl)+'%</span></div>';
+    vs='<div class="row">'+chip(deltaStatus(dl))+'<span class="hint">'+L('vsLastWeek',prev.pct,sign(dl))+'</span></div>';
   }
-  const pace='<section class="panel pace"><div class="hint">Weekly pace</div>'+
+  const pace='<section class="panel pace"><div class="hint">'+L('weeklyPace')+'</div>'+
     '<div class="row"><span class="big">'+(curPct===null?'&mdash;':curPct+'%')+'</span>'+chip(ps)+'</div>'+
-    '<div class="hint">'+(m.E?'Completed '+m.Dall+' of '+m.E+' required items so far.':'No required items yet.')+'</div>'+vs+'</section>';
+    '<div class="hint">'+(m.E?L('doneItems',m.Dall,m.E):L('noItemsYet'))+'</div>'+vs+'</section>';
 
   const attP=m.att.E?Math.round(m.att.D/m.att.E*100):null;
   const overdueR=revs.filter(r=>diffDays(parse(r.due),T)<0).length,dueR=revs.filter(r=>diffDays(parse(r.due),T)===0).length;
-  const revSt=overdueR?{cls:'bad',arrow:'down',label:overdueR+' overdue'}:dueR?{cls:'warn',arrow:'flat',label:'Due today'}:{cls:'ok',arrow:'up',label:'Up to date'};
+  const revSt=overdueR?{cls:'bad',arrow:'down',label:L('nOverdue',overdueR)}:dueR?{cls:'warn',arrow:'flat',label:L('dueToday')}:{cls:'ok',arrow:'up',label:L('upToDate')};
   const overdueT=openT.filter(t=>taskInfo(t).left<0).length,startT=openT.filter(t=>{const i=taskInfo(t);return i.left>=0&&i.cls!=='ok';}).length;
-  const tkSt=overdueT?{cls:'bad',arrow:'down',label:overdueT+' overdue'}:startT?{cls:'warn',arrow:'flat',label:startT+' to start'}:{cls:'ok',arrow:'up',label:'On schedule'};
+  const tkSt=overdueT?{cls:'bad',arrow:'down',label:L('nOverdue',overdueT)}:startT?{cls:'warn',arrow:'flat',label:L('nToStart',startT)}:{cls:'ok',arrow:'up',label:L('onSchedule')};
   const sd=streakDays(),hasData=Object.keys(S.checks).length>0;
-  const stSt=!hasData?NEU:sd>=3?{cls:'ok',arrow:'up',label:'Strong'}:sd>=1?{cls:'warn',arrow:'flat',label:'Short'}:{cls:'bad',arrow:'down',label:'Broken'};
+  const stSt=!hasData?NEU():sd>=3?{cls:'ok',arrow:'up',label:L('strong')}:sd>=1?{cls:'warn',arrow:'flat',label:L('short')}:{cls:'bad',arrow:'down',label:L('broken')};
   const tile=(k,v,unit,sub,st)=>'<div class="stat"><div class="k">'+k+'</div><div class="v">'+v+(unit?'<small>'+unit+'</small>':'')+'</div>'+chip(st)+(sub?'<p>'+sub+'</p>':'')+'</div>';
   const tiles='<div class="stats">'+
-    tile('Attendance',attP===null?'&mdash;':attP+'%','',m.att.E?'Attended '+m.att.D+' of '+m.att.E+' sessions so far':'No sessions have started this week',attP===null?NEU:pctStatus(attP))+
-    tile('Reviews',dueR+overdueR,'due','Active topics: '+revs.length,revSt)+
-    tile('Tasks',openT.length,'open','',tkSt)+
-    tile('Streak',sd,sd===1?'day':'days','A day counts at 70% or more done',stSt)+'</div>';
+    tile(L('attendance'),attP===null?'&mdash;':attP+'%','',m.att.E?L('attendedOf',m.att.D,m.att.E):L('noSessionsWeek'),attP===null?NEU():pctStatus(attP))+
+    tile(L('reviewsT'),dueR+overdueR,L('dueUnit'),L('activeTopics',revs.length),revSt)+
+    tile(L('tasksT'),openT.length,L('openUnit'),'',tkSt)+
+    tile(L('streak'),pl(sd,'day'),'',L('streakHint'),stSt)+'</div>';
 
   const dayCols=m.days.map((x,i)=>{
     const dow=ORDER[i];let h='4px',bc='var(--line2)',pc='';
     if(x.active&&x.pct!==null&&x.c<=0){h=Math.max(4,x.pct)+'%';bc=x.c===0?'var(--accent)':(x.pct>=85?'var(--ok)':x.pct>=60?'var(--warn)':'var(--bad)');pc=x.pct+'%';}
-    return '<div class="col '+(x.c===0?'today':'')+'"><span class="pc">'+pc+'</span><div class="track"><i class="b" style="--h:'+h+';--bc:'+bc+'"></i></div><span class="lab">'+DAYS_S[dow]+'</span></div>';
+    return '<div class="col '+(x.c===0?'today':'')+'"><span class="pc">'+pc+'</span><div class="track"><i class="b" style="--h:'+h+';--bc:'+bc+'"></i></div><span class="lab">'+dayShort(dow)+'</span></div>';
   }).join('');
 
   const hist=[3,2,1,0].map(k=>({k,d:addDays(ws,-7*k),v:k?calcWeek(addDays(ws,-7*k)).pct:curPct}));
@@ -793,54 +1133,54 @@ function viewProgress(){
     const pv=i?hist[i-1].v:null;let dl='';
     if(h.v!==null&&pv!==null){const x=h.v-pv;dl=chip(deltaStatus(x),true)+'<span>'+sign(x)+'</span>';}
     const bc=h.k===0?'var(--accent)':h.v===null?'var(--line2)':h.v>=85?'var(--ok)':h.v>=60?'var(--warn)':'var(--bad)';
-    const lab=h.k===0?'Current':'Week of '+fmtDate(h.d);
+    const lab=h.k===0?L('current'):L('weekOf',fmtDate(h.d));
     return '<div class="col '+(h.k===0?'today':'')+'"><span class="pc">'+(h.v===null?'':h.v+'%')+'</span><div class="track"><i class="b" style="--h:'+(h.v===null?'4px':Math.max(4,h.v)+'%')+';--bc:'+bc+'"></i></div><span class="lab">'+lab+'</span><span class="dl">'+dl+'</span></div>';
   }).join('');
 
   const crs=Object.keys(SUBJ).map(code=>{
     const sj=SUBJ[code],b=m.bySub[code]||{E:0,D:0};
-    const p=b.E?Math.min(100,Math.round(b.D/b.E*100)):null,st=p===null?NEU:pctStatus(p);
+    const p=b.E?Math.min(100,Math.round(b.D/b.E*100)):null,st=p===null?NEU():pctStatus(p);
     const oR=revs.filter(r=>r.sub===code&&diffDays(parse(r.due),T)<0).length,oT=openT.filter(t=>t.sub===code&&taskInfo(t).left<0).length;
-    return '<li style="--c:'+sj.color+'"><div class="top2"><span><span class="code"><i class="cd"></i>'+code+'</span> '+esc(sj.short)+'</span><b>'+(p===null?'&mdash;':p+'%')+'</b></div>'+
+    return '<li style="--c:'+sj.color+'"><div class="top2"><span><span class="code"><i class="cd"></i>'+code+'</span> '+esc(loc(sj.short))+'</span><b>'+(p===null?'&mdash;':p+'%')+'</b></div>'+
       '<div class="bar"><i style="--p:'+(p||0)+'%"></i></div>'+
-      '<div class="chips">'+chip(st)+(oR?'<span class="pill bad">'+plural(oR,'overdue review')+'</span>':'')+(oT?'<span class="pill bad">'+plural(oT,'overdue task')+'</span>':'')+
+      '<div class="chips">'+chip(st)+(oR?'<span class="pill bad">'+pl(oR,'overdueReview')+'</span>':'')+(oT?'<span class="pill bad">'+pl(oT,'overdueTask')+'</span>':'')+
       (b.E?'<span class="pill">'+b.D+' / '+b.E+'</span>':'')+'</div></li>';
   }).join('');
 
-  const legend='<div class="panel legend">'+chip({cls:'ok',arrow:'up',label:'Ahead, good, improving'})+chip({cls:'ok',arrow:'flat',label:'On track'})+chip({cls:'warn',arrow:'flat',label:'Fair'})+chip({cls:'bad',arrow:'down',label:'Behind, low, declining'})+'</div>';
+  const legend='<div class="panel legend">'+chip({cls:'ok',arrow:'up',label:L('legendGood')})+chip({cls:'ok',arrow:'flat',label:L('onTrack')})+chip({cls:'warn',arrow:'flat',label:L('fair')})+chip({cls:'bad',arrow:'down',label:L('legendBehind')})+'</div>';
 
-  return '<div class="ph"><div><h1>Progress</h1><p class="sub">Pace compares completed items with what the schedule requires so far: preparation, attendance, summaries and study blocks.</p></div></div>'+
+  return '<div class="ph"><div><h1>'+L('tab_progress')+'</h1><p class="sub">'+L('progressSub')+'</p></div></div>'+
     '<div class="cols two"><div>'+pace+tiles+
-    '<section class="sec">'+H2('Daily activity')+'<div class="panel chart c7">'+dayCols+'</div></section>'+
-    '<section class="sec">'+H2('Last 4 weeks')+'<div class="panel chart c4">'+histCols+'</div></section></div>'+
-    '<div><section class="sec">'+H2('Course progress')+'<ul class="panel crs">'+crs+'</ul></section>'+
-    '<section class="sec">'+H2('Indicators')+legend+'</section>'+
-    '<section class="sec">'+H2('Settings')+'<div class="panel form"><label>Tracking since<input type="date" id="since" value="'+esc(S.since)+'"></label><p class="hint">Indicators are calculated from this date.</p></div></section></div></div>';
+    '<section class="sec">'+H2(L('dailyActivity'))+'<div class="panel chart c7">'+dayCols+'</div></section>'+
+    '<section class="sec">'+H2(L('last4'))+'<div class="panel chart c4">'+histCols+'</div></section></div>'+
+    '<div><section class="sec">'+H2(L('courseProgress'))+'<ul class="panel crs">'+crs+'</ul></section>'+
+    '<section class="sec">'+H2(L('indicators'))+legend+'</section>'+
+    '<section class="sec">'+H2(L('settings'))+'<div class="panel form"><label>'+L('trackingSince')+'<input type="date" id="since" value="'+esc(S.since)+'"></label><p class="hint">'+L('trackingHint')+'</p></div></section></div></div>';
 }
 
 /* ---------- poll ---------- */
 function voteForm(){
   const dr=poll.draft;
   const opt=(v,label)=>'<button type="button" class="opt" role="radio" aria-checked="'+(dr.support===v)+'" data-act="pollans" data-v="'+(v?'yes':'no')+'"><span class="rd"></span>'+label+'</button>';
-  let h='<section class="panel form"><h3>Do you think support sessions should be mandatory for all groups?</h3>'+
-    '<div class="choice" role="radiogroup" aria-label="Support sessions">'+opt(true,'Yes')+opt(false,'No')+'</div>';
+  let h='<section class="panel form"><h3>'+L('pollQ')+'</h3>'+
+    '<div class="choice" role="radiogroup" aria-label="'+L('supportSessions')+'">'+opt(true,L('yes'))+opt(false,L('no'))+'</div>';
   if(dr.support===true){
-    h+='<div class="q2"><h3>Select your group</h3><p class="hint">There are '+GROUPS+' groups. You have one vote, and it counts for the group you select.</p><div class="groups" role="radiogroup" aria-label="Group">';
+    h+='<div class="q2"><h3>'+L('pickGroup')+'</h3><p class="hint">'+L('groupHint',GROUPS)+'</p><div class="groups" role="radiogroup" aria-label="'+L('group')+'">';
     for(let g=1;g<=GROUPS;g++)h+='<button type="button" class="grp" role="radio" aria-checked="'+(dr.group===g)+'" data-act="pollgrp" data-g="'+g+'">'+g+'</button>';
     h+='</div></div>';
   }
   const ready=dr.support===false||(dr.support===true&&!!dr.group);
   const ed=poll.editing;
-  h+='<div class="tools"><button class="btn primary" data-act="pollsubmit"'+(ready&&!poll.busy?'':' disabled')+'>'+(poll.busy?'Saving…':(ed?'Update vote':'Submit vote'))+'</button>'+
-    (ed?'<button class="btn quiet" data-act="pollcancel"'+(poll.busy?' disabled':'')+'>Cancel</button>':'')+'</div>'+
-    '<p class="hint">You can change your vote at any time. Only your latest vote is counted.</p></section>';
+  h+='<div class="tools"><button class="btn primary" data-act="pollsubmit"'+(ready&&!poll.busy?'':' disabled')+'>'+(poll.busy?L('saving'):(ed?L('updateVote'):L('submitVote')))+'</button>'+
+    (ed?'<button class="btn quiet" data-act="pollcancel"'+(poll.busy?' disabled':'')+'>'+L('cancel')+'</button>':'')+'</div>'+
+    '<p class="hint">'+L('voteHint')+'</p></section>';
   return h;
 }
 function voteDone(m){
-  return '<section class="panel form done-note"><h3>Your vote is recorded</h3><p>'+(m.support?'You voted Yes for Group '+m.group+'.':'You voted No.')+'</p><div class="tools" style="margin-top:8px"><button class="btn" data-act="pollchange">Change vote</button></div></section>';
+  return '<section class="panel form done-note"><h3>'+L('voteRecorded')+'</h3><p>'+(m.support?L('votedYes',m.group):L('votedNo'))+'</p><div class="tools" style="margin-top:8px"><button class="btn" data-act="pollchange">'+L('changeVote')+'</button></div></section>';
 }
 function pollResults(mine){
-  if(!mine)return '<section class="panel empty">Results appear after you vote.</section>';
+  if(!mine)return '<section class="panel empty">'+L('resultsAfter')+'</section>';
   const v=poll.votes,total=v.length,yes=v.filter(x=>x.support===true),yn=yes.length,no=total-yn;
   const yp=total?Math.round(yn/total*100):0,np=total?100-yp:0;
   const per=Array(GROUPS+1).fill(0);
@@ -848,30 +1188,31 @@ function pollResults(mine){
   const max=Math.max(1,...per.slice(1));
   let rows='';
   for(let g=1;g<=GROUPS;g++){
-    rows+='<div class="res'+(mine.support&&mine.group===g?' mine':'')+'"><span class="lb">Group '+g+'</span><div class="bar"><i style="--p:'+Math.round(per[g]/max*100)+'%"></i></div><span class="n">'+per[g]+'</span></div>';
+    rows+='<div class="res'+(mine.support&&mine.group===g?' mine':'')+'"><span class="lb">'+L('group')+' '+g+'</span><div class="bar"><i style="--p:'+Math.round(per[g]/max*100)+'%"></i></div><span class="n">'+per[g]+'</span></div>';
   }
-  return '<div><section class="sec">'+H2('Results')+'<div class="panel form">'+
-    '<div class="split" role="img" aria-label="Yes '+yp+' percent, No '+np+' percent"><i style="width:'+yp+'%;background:var(--accent)"></i><i style="width:'+np+'%;background:var(--line2)"></i></div>'+
-    '<div class="legend2"><span><i style="background:var(--accent)"></i><b>Yes</b> '+yp+'% ('+yn+')</span><span><i style="background:var(--line2)"></i><b>No</b> '+np+'% ('+no+')</span><span>'+plural(total,'vote')+'</span></div></div></section>'+
-    '<section class="sec">'+H2('Yes votes by group')+'<div class="panel form">'+rows+'</div></section></div>';
+  return '<div><section class="sec">'+H2(L('results'))+'<div class="panel form">'+
+    '<div class="split" role="img" aria-label="'+L('yesNoAria',yp,np)+'"><i style="width:'+yp+'%;background:var(--accent)"></i><i style="width:'+np+'%;background:var(--line2)"></i></div>'+
+    '<div class="legend2"><span><i style="background:var(--accent)"></i><b>'+L('yes')+'</b> '+yp+'% ('+yn+')</span><span><i style="background:var(--line2)"></i><b>'+L('no')+'</b> '+np+'% ('+no+')</span><span>'+pl(total,'vote')+'</span></div></div></section>'+
+    '<section class="sec">'+H2(L('yesByGroup'))+'<div class="panel form">'+rows+'</div></section></div>';
 }
 function viewPoll(){
-  const head='<div class="ph"><div><h1>Poll</h1><p class="sub">One vote per student. You can change your vote later.</p></div></div>';
-  if(!cloud.user)return head+'<div class="panel empty">Sign in to take part in the poll.</div>';
-  if(poll.status==='error')return head+'<div class="panel empty">'+esc(poll.err||'Could not load the poll.')+'</div>';
-  if(poll.status!=='ready')return head+'<div class="panel empty">Loading the poll…</div>';
+  const head='<div class="ph"><div><h1>'+L('tab_poll')+'</h1><p class="sub">'+L('pollSub')+'</p></div></div>'+
+    '<div class="notice" style="border-color:var(--line2);background:var(--sunken);color:var(--ink2)">'+L('pollNotAnon')+'</div>';
+  if(!cloud.user)return head+'<div class="panel empty">'+L('pollSignIn')+'</div>';
+  if(poll.status==='error')return head+'<div class="panel empty">'+esc(poll.err||L('pollErr'))+'</div>';
+  if(poll.status!=='ready')return head+'<div class="panel empty">'+L('pollLoad')+'</div>';
   return head+'<div class="cols two">'+(poll.mine&&!poll.editing?voteDone(poll.mine):voteForm())+pollResults(poll.mine)+'</div>';
 }
 async function submitVote(){
   const dr=poll.draft;
   if(poll.busy||dr.support===null||(dr.support&&!dr.group))return;
-  if(!bridge.pollVote){toast('The poll is not ready yet.');return;}
+  if(!bridge.pollVote){toast(L('pollNotReady'));return;}
   const wasEdit=poll.editing;
   poll.busy=true;render();
-  try{await bridge.pollVote(dr.support,dr.support?dr.group:null);poll.editing=false;toast(wasEdit?'Vote updated':'Vote submitted');}
+  try{await bridge.pollVote(dr.support,dr.support?dr.group:null);poll.editing=false;toast(wasEdit?L('voteUpdated'):L('voteSubmitted'));}
   catch(e){
     console.error(e);
-    toast(e&&e.code==='permission-denied'?'Vote not saved. Make sure the updated poll rules are published in Firebase.':'Vote not saved. Check your connection and try again.');
+    toast(e&&e.code==='permission-denied'?L('voteFailRules'):L('voteFailNet'));
   }
   poll.busy=false;render();
 }
@@ -887,7 +1228,7 @@ function chrome(){
   const ws=weekStart();let T=0,D=0;
   for(let i=0;i<7;i++){const s=dayStats(addDays(ws,i));T+=s.total;D+=s.done;}
   const p=T?Math.round(D/T*100):0;
-  $('#wkTxt').innerHTML='This week '+p+'% '+chip(paceStatus(calcWeek(ws).pace),true);
+  $('#wkTxt').innerHTML=L('thisWeek',p)+' '+chip(paceStatus(calcWeek(ws).pace),true);
   $('#wkBar').style.setProperty('--p',p+'%');
 }
 function render(){
@@ -896,26 +1237,67 @@ function render(){
   chrome();
 }
 function setTab(t){tab=t;render();window.scrollTo(0,0);}
+/* Applies the current language to the page shell: direction, static text
+   and the button label. The views pick it up on the next render. */
+function applyLang(){
+  const html=document.documentElement;
+  html.lang=lang;html.dir=RAW('dir');
+  document.title=L('appName');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=L(el.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-attr]').forEach(el=>{
+    const parts=el.dataset.i18nAttr.split('|');el.setAttribute(parts[0],L(parts[1]));
+  });
+  $('#credit').innerHTML=L('credit');
+  $('#termLine').textContent=loc(CONF.term);
+  $('#brandSub').textContent=loc(CONF.term);
+  const b=$('#lang');b.textContent=L('switchTo');b.setAttribute('aria-label',L('switchTo'));
+  $('#auth').setAttribute('aria-label',L('account'));
+  $('#acct').setAttribute('aria-label',L('account'));
+}
+function setLang(v){
+  if(!L10N[v]||v===lang)return;
+  lang=v;
+  try{localStorage.setItem(LANG_KEY,v);}catch(e){}
+  applyLang();render();renderAcct();if(!$('#auth').hidden)renderAuth();
+}
 let toastT;
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2800);}
 function addReview(sub,topic){
-  S.reviews.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),sub,topic,stage:0,due:iso(addDays(today0(),INTERVALS[0])),done:false});
+  S.reviews.push({id:newId(),sub,topic,stage:0,due:iso(addDays(today0(),INTERVALS[0])),done:false,upd:now()});
   save();
+}
+/* Replacing the whole state (restoring a backup, or erasing everything)
+   has to leave a tombstone for each item that disappears. Without them the
+   merge with another device would simply bring the old items back. */
+function replaceState(next){
+  const t=now(),keep=new Set;
+  (next.tasks||[]).forEach(x=>keep.add('t'+x.id));
+  (next.reviews||[]).forEach(x=>keep.add('r'+x.id));
+  TASKS().forEach(x=>{if(!keep.has('t'+x.id))next.tasks.push({id:x.id,sub:x.sub,title:'',type:'Other',deadline:x.deadline,lead:3,done:false,del:t,upd:t});});
+  REVS().forEach(x=>{if(!keep.has('r'+x.id))next.reviews.push({id:x.id,sub:x.sub,topic:'',stage:0,due:x.due,done:false,del:t,upd:t});});
+  Object.keys(S.checks||{}).forEach(k=>{if(!next.checks[k])next.xchecks[k]=t;});
+  Object.keys(SUBJ).forEach(c=>{if(S.notes[c]&&next.notes[c]===undefined){next.notes[c]='';next.noteAt[c]=t;}});
+  (next.tasks||[]).forEach(x=>{if(!x.upd)x.upd=t;});
+  (next.reviews||[]).forEach(x=>{if(!x.upd)x.upd=t;});
+  Object.keys(next.checks).forEach(k=>{if(next.checks[k]===true)next.checks[k]=t;});
+  S=next;save();render();
 }
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 function cleanBackup(o){
   if(!o||typeof o!=='object')throw new Error('invalid');
   const r=defaults(),uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5),sid=v=>String(v||uid()).replace(/[^\w-]/g,'')||uid();
-  if(o.checks&&typeof o.checks==='object')Object.keys(o.checks).forEach(k=>{if(o.checks[k]&&/^\d{4}-\d{2}-\d{2}\|(s|b)\|/.test(k))r.checks[k]=true;});
-  r.tasks=(Array.isArray(o.tasks)?o.tasks:[]).filter(t=>t&&SUBJ[t.sub]&&typeof t.title==='string'&&DATE_RE.test(t.deadline)).map(t=>({id:sid(t.id),title:t.title,sub:t.sub,type:String(t.type||'Other'),deadline:t.deadline,lead:Math.max(1,Math.min(30,parseInt(t.lead,10)||3)),done:!!t.done}));
-  r.reviews=(Array.isArray(o.reviews)?o.reviews:[]).filter(x=>x&&SUBJ[x.sub]&&typeof x.topic==='string'&&DATE_RE.test(x.due)).map(x=>({id:sid(x.id),sub:x.sub,topic:x.topic,stage:Math.max(0,Math.min(INTERVALS.length,parseInt(x.stage,10)||0)),due:x.due,done:!!x.done}));
-  if(o.notes&&typeof o.notes==='object')Object.keys(SUBJ).forEach(c=>{if(typeof o.notes[c]==='string')r.notes[c]=o.notes[c];});
+  const CK=/^\d{4}-\d{2}-\d{2}\|(s|b)\|/;
+  if(o.checks&&typeof o.checks==='object')Object.keys(o.checks).forEach(k=>{if(o.checks[k]&&CK.test(k))r.checks[k]=tsOf(o.checks[k])||1;});
+  if(o.xchecks&&typeof o.xchecks==='object')Object.keys(o.xchecks).forEach(k=>{if(o.xchecks[k]&&CK.test(k))r.xchecks[k]=tsOf(o.xchecks[k])||1;});
+  r.tasks=(Array.isArray(o.tasks)?o.tasks:[]).filter(t=>t&&SUBJ[t.sub]&&typeof t.title==='string'&&DATE_RE.test(t.deadline)).map(t=>({id:sid(t.id),title:t.title,sub:t.sub,type:String(t.type||'Other'),deadline:t.deadline,lead:Math.max(1,Math.min(30,parseInt(t.lead,10)||3)),done:!!t.done,upd:tsOf(t.upd),del:tsOf(t.del)||undefined}));
+  r.reviews=(Array.isArray(o.reviews)?o.reviews:[]).filter(x=>x&&SUBJ[x.sub]&&typeof x.topic==='string'&&DATE_RE.test(x.due)).map(x=>({id:sid(x.id),sub:x.sub,topic:x.topic,stage:Math.max(0,Math.min(INTERVALS.length,parseInt(x.stage,10)||0)),due:x.due,done:!!x.done,upd:tsOf(x.upd),del:tsOf(x.del)||undefined}));
+  if(o.notes&&typeof o.notes==='object')Object.keys(SUBJ).forEach(c=>{if(typeof o.notes[c]==='string'){r.notes[c]=o.notes[c];r.noteAt[c]=tsOf((o.noteAt||{})[c]);}});
   if(DATE_RE.test(o.since))r.since=o.since;
   return r;
 }
 
 /* ---------- account and cloud sync (Firebase) ---------- */
-const STAT={idle:'Not signed in',syncing:'Syncing…',saving:'Saving…',synced:'Up to date',offline:'Offline. Changes are saved on this device.',denied:'Save failed. Check your Firestore rules.',error:'Sync error.'};
+const STAT=()=>({idle:L('stIdle'),syncing:L('stSyncing'),saving:L('stSaving'),synced:L('stSynced'),offline:L('stOffline'),denied:L('stDenied'),error:L('stError')});
 const GOOGLE_SVG='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 const FB_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.34l-.53 3.49h-2.81V24C19.61 23.1 24 18.1 24 12.07z"/></svg>';
 function setLocked(v){document.querySelectorAll('.top,.page,.nav').forEach(el=>{if(v){el.setAttribute('inert','');el.setAttribute('aria-hidden','true');}else{el.removeAttribute('inert');el.removeAttribute('aria-hidden');}});}
@@ -927,44 +1309,45 @@ function avatar(u){
 function renderAcct(){
   const b=$('#acct'),u=cloud.user;
   if(!u){b.hidden=true;return;}
-  b.hidden=false;b.className='acct';b.innerHTML=avatar(u)+'<i class="dot '+statusCls()+'"></i>';b.setAttribute('aria-label','Account: '+(u.name||u.email||''));
+  b.hidden=false;b.className='acct';b.innerHTML=avatar(u)+'<i class="dot '+statusCls()+'"></i>';b.setAttribute('aria-label',L('accountOf',u.name||u.email||''));
 }
 function setMsg(html,kind){
   cloud.msg=html||'';cloud.msgKind=kind||'err';
   const el=$('#authMsg');
   if(el){el.className='msg'+(cloud.msg?' '+cloud.msgKind:'');el.innerHTML=cloud.msg;}
 }
+const langLink=()=>'<button type="button" class="flink" data-act="lang" style="display:block;margin:14px auto 0">'+L('switchTo')+'</button>';
 function renderAuth(){
   const u=cloud.user,el=$('#authBody');
   if(u){
     el.innerHTML='<div class="g-av">'+avatar(u)+'</div><div class="acc-nm" dir="auto">'+esc(u.name||u.email||'')+'</div>'+
       (u.name&&u.email?'<div class="acc-em">'+esc(u.email)+'</div>':'')+
-      '<div class="stat-line"><i class="dot '+statusCls()+'"></i><span>'+(STAT[cloud.status]||STAT.idle)+'</span></div>'+
-      '<button class="gbtn" data-act="signout">Sign out</button><button class="gbtn alt" data-act="syncnow">Sync now</button><button class="gbtn alt" data-act="authclose">Close</button>';
+      '<div class="stat-line"><i class="dot '+statusCls()+'"></i><span>'+(STAT()[cloud.status]||STAT().idle)+'</span></div>'+
+      '<button class="gbtn" data-act="signout">'+L('signOut')+'</button><button class="gbtn alt" data-act="syncnow">'+L('syncNow')+'</button><button class="gbtn alt" data-act="authclose">'+L('close')+'</button>'+langLink();
     return;
   }
   if(cloud.loadFailed){
-    el.innerHTML='<div class="h">Study Planner</div><div class="msg err">'+cloud.msg+'</div><button class="gbtn" data-act="reload">Try again</button>';
+    el.innerHTML='<div class="h">'+L('appName')+'</div><div class="msg err">'+cloud.msg+'</div><button class="gbtn" data-act="reload">'+L('tryAgain')+'</button>'+langLink();
     return;
   }
   if(cloud.checking){
-    el.innerHTML='<div class="h">Study Planner</div><p class="p" style="margin-bottom:0">Checking your account…</p>';
+    el.innerHTML='<div class="h">'+L('appName')+'</div><p class="p" style="margin-bottom:0">'+L('checkingAcct')+'</p>'+langLink();
     return;
   }
   const su=cloud.mode==='signup',dis=cloud.configured?'':' disabled';
-  el.innerHTML='<div class="h">Study Planner</div><p class="p">Sign in to sync your plan across devices.</p>'+
-    '<div class="tabs" role="tablist"><button type="button" role="tab" class="tab'+(su?'':' on')+'" data-act="authtab" data-m="login">Sign in</button><button type="button" role="tab" class="tab'+(su?' on':'')+'" data-act="authtab" data-m="signup">Create account</button></div>'+
+  el.innerHTML='<div class="h">'+L('appName')+'</div><p class="p">'+L('signInSub')+'</p>'+
+    '<div class="tabs" role="tablist"><button type="button" role="tab" class="tab'+(su?'':' on')+'" data-act="authtab" data-m="login">'+L('signIn')+'</button><button type="button" role="tab" class="tab'+(su?' on':'')+'" data-act="authtab" data-m="signup">'+L('createAccount')+'</button></div>'+
     '<form data-form="auth" data-m="'+(su?'signup':'login')+'" novalidate>'+
-    (su?'<input class="fld" name="name" type="text" placeholder="Name" autocomplete="name"'+dis+'>':'')+
-    '<input class="fld" name="email" type="email" placeholder="Email" autocomplete="email" inputmode="email"'+dis+'>'+
-    '<input class="fld" name="password" type="password" placeholder="Password" autocomplete="'+(su?'new-password':'current-password')+'"'+dis+'>'+
-    (su?'':'<button type="button" class="flink" data-act="forgot"'+dis+'>Forgot password?</button>')+
+    (su?'<input class="fld" name="name" type="text" placeholder="'+L('name')+'" autocomplete="name" dir="auto"'+dis+'>':'')+
+    '<input class="fld" name="email" type="email" placeholder="'+L('email')+'" autocomplete="email" inputmode="email" dir="ltr"'+dis+'>'+
+    '<input class="fld" name="password" type="password" placeholder="'+L('password')+'" autocomplete="'+(su?'new-password':'current-password')+'" dir="ltr"'+dis+'>'+
+    (su?'':'<button type="button" class="flink" data-act="forgot"'+dis+'>'+L('forgotPw')+'</button>')+
     '<div id="authMsg" class="msg" role="alert"></div>'+
-    (cloud.configured?'':'<div class="devnote">Firebase is not configured. See the FIREBASE SETTINGS section at the top of this file.</div>')+
-    '<button class="gbtn" id="authSubmit" type="submit"'+dis+'>'+(su?'Create account':'Sign in')+'</button></form>'+
-    '<div class="dv">or continue with</div>'+
+    (cloud.configured?'':'<div class="devnote">'+L('notConfigured')+'</div>')+
+    '<button class="gbtn" id="authSubmit" type="submit"'+dis+'>'+(su?L('createAccount'):L('signIn'))+'</button></form>'+
+    '<div class="dv">'+L('orContinue')+'</div>'+
     '<div class="pr"><button type="button" class="pbtn" data-act="signin" data-p="google"'+dis+'>'+GOOGLE_SVG+'Google</button>'+
-    '<button type="button" class="pbtn" data-act="signin" data-p="facebook"'+dis+'>'+FB_SVG+'Facebook</button></div>';
+    '<button type="button" class="pbtn" data-act="signin" data-p="facebook"'+dis+'>'+FB_SVG+'Facebook</button></div>'+langLink();
   setMsg(cloud.msg,cloud.msgKind);
 }
 function openAuth(){
@@ -975,9 +1358,10 @@ function closeAuth(){if(!cloud.user)return;$('#auth').hidden=true;}
 Object.assign(bridge,{
   keyFor:uid=>KEY+':'+uid,
   read:readKey,
-  hasData:o=>!!o&&((o.updatedAt||0)>0||Object.keys(o.checks||{}).length>0||(o.tasks||[]).length>0||(o.reviews||[]).length>0),
+  hasData:o=>!!o&&((o.updatedAt||0)>0||Object.keys(o.checks||{}).length>0||Object.keys(o.xchecks||{}).length>0||(o.tasks||[]).length>0||(o.reviews||[]).length>0),
   clearGuest(){try{localStorage.removeItem(KEY);}catch(e){}},
   get:()=>S,
+  merge:mergeState,
   set(o){S=Object.assign(defaults(),o);if(!S.since)S.since=iso(today0());save(false);render();},
   status(v){cloud.status=v;renderAcct();if(cloud.user&&!$('#auth').hidden)renderAuth();},
   fail(msg,unused,code){
@@ -1007,13 +1391,14 @@ document.addEventListener('click',e=>{
   if(e.target.id==='auth'){closeAuth();return;}
   const el=e.target.closest('[data-act]');if(!el)return;
   const a=el.dataset.act,id=el.dataset.id;
+  if(a==='lang'){setLang(lang==='ar'?'en':'ar');return;}
   if(a==='acct'){openAuth();return;}
   if(a==='authclose'){closeAuth();return;}
   if(a==='authtab'){cloud.mode=el.dataset.m;cloud.msg='';renderAuth();return;}
   if(a==='reload'){window.location.reload();return;}
   if(a==='forgot'){
     const em=(document.querySelector('#authBody input[name=email]')||{value:''}).value.trim();
-    if(!em){setMsg('Enter your email address first.');return;}
+    if(!em){setMsg(L('enterEmailFirst'));return;}
     if(bridge.resetPassword)bridge.resetPassword(em);
     return;
   }
@@ -1026,19 +1411,25 @@ document.addEventListener('click',e=>{
   if(a==='now'){viewDate=today0();render();return;}
   if(a==='go'){viewDate=parse(el.dataset.d);setTab('today');return;}
   if(a==='addrev'){
-    const topic=window.prompt('Topic name:');
-    if(topic&&topic.trim()){addReview(el.dataset.sub,topic.trim());render();toast('Added to review. The first review is tomorrow.');}
+    const topic=window.prompt(L('topicPrompt'));
+    if(topic&&topic.trim()){addReview(el.dataset.sub,topic.trim());render();toast(L('addedReview'));}
     return;
   }
-  if(a==='tkdone'){const t=S.tasks.find(x=>x.id===id);if(t){t.done=!t.done;save();render();}return;}
-  if(a==='tkdel'){S.tasks=S.tasks.filter(x=>x.id!==id);save();render();return;}
+  if(a==='tkdone'){const t=S.tasks.find(x=>x.id===id);if(t){t.done=!t.done;t.upd=now();save();render();}return;}
+  if(a==='tkdel'){const t=S.tasks.find(x=>x.id===id);if(t){t.del=now();t.upd=now();}save();render();return;}
   if(a==='rvdone'){
     const r=S.reviews.find(x=>x.id===id);
-    if(r){r.stage++;if(r.stage>=INTERVALS.length){r.done=true;toast('All reviews for this topic are complete.');}else{r.due=iso(addDays(today0(),INTERVALS[r.stage]));}save();render();}
+    if(r){r.stage++;r.upd=now();if(r.stage>=INTERVALS.length){r.done=true;toast(L('allReviewsDone'));}else{r.due=iso(addDays(today0(),INTERVALS[r.stage]));}save();render();}
     return;
   }
-  if(a==='rvforgot'){const r=S.reviews.find(x=>x.id===id);if(r){r.stage=0;r.due=iso(addDays(today0(),1));save();render();toast('This topic will come back tomorrow.');}return;}
-  if(a==='rvdel'){S.reviews=S.reviews.filter(x=>x.id!==id);save();render();return;}
+  if(a==='rvforgot'){
+    /* Step one stage back instead of starting over, so a single slip does
+       not throw away weeks of spacing. */
+    const r=S.reviews.find(x=>x.id===id);
+    if(r){r.stage=Math.max(0,r.stage-1);r.due=iso(addDays(today0(),1));r.upd=now();save();render();toast(L('comesBack'));}
+    return;
+  }
+  if(a==='rvdel'){const r=S.reviews.find(x=>x.id===id);if(r){r.del=now();r.upd=now();}save();render();return;}
   if(a==='pollans'){poll.draft.support=el.dataset.v==='yes';render();return;}
   if(a==='pollgrp'){poll.draft.group=parseInt(el.dataset.g,10);render();return;}
   if(a==='pollsubmit'){submitVote();return;}
@@ -1050,14 +1441,14 @@ document.addEventListener('click',e=>{
     return;
   }
   if(a==='import'){$('#imp').click();return;}
-  if(a==='reset'){if(window.confirm('This erases all saved data, including synced account data. Continue?')){S=defaults();save();render();}return;}
+  if(a==='reset'){if(window.confirm(L('confirmReset'))){replaceState(defaults());}return;}
 });
 
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.matches('input[type=checkbox][data-k]')){
     const key=t.dataset.k;
-    if(t.checked)S.checks[key]=true;else delete S.checks[key];
+    if(t.checked){S.checks[key]=now();delete S.xchecks[key];}else{delete S.checks[key];S.xchecks[key]=now();}
     save();
     const y=window.scrollY;render();window.scrollTo(0,y);
     const n=document.querySelector('[data-k="'+CSS.escape(key)+'"]');if(n)n.focus();
@@ -1067,8 +1458,8 @@ document.addEventListener('change',e=>{
   if(t.id==='imp'&&t.files&&t.files[0]){
     const fr=new FileReader();
     fr.onload=()=>{
-      try{const o=cleanBackup(JSON.parse(fr.result));S=o;save();render();toast('Backup restored');}
-      catch(err){toast('That file is not a valid backup.');}
+      try{const o=cleanBackup(JSON.parse(fr.result));replaceState(o);toast(L('backupRestored'));}
+      catch(err){toast(L('badBackup'));}
       t.value='';
     };
     fr.readAsText(t.files[0]);
@@ -1078,7 +1469,7 @@ document.addEventListener('change',e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#auth').hidden)closeAuth();});
 
 document.addEventListener('input',e=>{
-  if(e.target.matches('textarea[data-note]')){S.notes[e.target.dataset.note]=e.target.value;save();}
+  if(e.target.matches('textarea[data-note]')){S.notes[e.target.dataset.note]=e.target.value;S.noteAt[e.target.dataset.note]=now();save();}
 });
 
 document.addEventListener('submit',e=>{
@@ -1087,8 +1478,8 @@ document.addEventListener('submit',e=>{
   const fd=new FormData(f);
   if(f.dataset.form==='auth'){
     const email=String(fd.get('email')||'').trim(),pw=String(fd.get('password')||''),name=String(fd.get('name')||'').trim();
-    if(!email||!pw){setMsg('Enter your email address and password.');return;}
-    if(!bridge.emailAuth){setMsg('The sign-in service is not ready yet.');return;}
+    if(!email||!pw){setMsg(L('enterEmailPw'));return;}
+    if(!bridge.emailAuth){setMsg(L('authNotReady'));return;}
     setMsg('');const btn=$('#authSubmit');if(btn)btn.disabled=true;
     Promise.resolve(bridge.emailAuth(f.dataset.m,email,pw,name)).then(()=>{const b2=$('#authSubmit');if(b2)b2.disabled=false;});
     return;
@@ -1096,14 +1487,15 @@ document.addEventListener('submit',e=>{
   if(f.dataset.form==='task'){
     const title=(fd.get('title')||'').trim(),dl=fd.get('deadline');
     if(!title||!dl)return;
-    S.tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),title,sub:fd.get('sub'),type:fd.get('type'),deadline:dl,lead:Math.max(1,Math.min(30,parseInt(fd.get('lead'),10)||3)),done:false});
-    save();render();toast('Task added');
+    S.tasks.push({id:newId(),title,sub:fd.get('sub'),type:fd.get('type'),deadline:dl,lead:Math.max(1,Math.min(30,parseInt(fd.get('lead'),10)||3)),done:false,upd:now()});
+    save();render();toast(L('taskAdded'));
   }else if(f.dataset.form==='review'){
     const topic=(fd.get('topic')||'').trim();if(!topic)return;
-    addReview(fd.get('sub'),topic);render();toast('Added to review. The first review is tomorrow.');
+    addReview(fd.get('sub'),topic);render();toast(L('addedReview'));
   }
 });
 
+applyLang();
 render();renderAcct();if(!cloud.user)openAuth();
 })();
 </script>
@@ -1186,14 +1578,15 @@ const CFG=window.FIREBASE_CONFIG||{};
   getRedirectResult(auth).catch(fail);
 
   /* ---- data helpers ---- */
-  const norm=d=>({checks:d.checks||{},tasks:d.tasks||[],reviews:d.reviews||[],notes:d.notes||{},since:d.since||B.get().since,updatedAt:d.updatedAt||0});
-  function merge(a,b){
-    const byId=(x,y)=>{const mp=new Map();(x||[]).forEach(i=>mp.set(i.id,i));(y||[]).forEach(i=>{if(!mp.has(i.id))mp.set(i.id,i);});return Array.from(mp.values());};
-    return {checks:Object.assign({},b.checks||{},a.checks||{}),tasks:byId(a.tasks,b.tasks),reviews:byId(a.reviews,b.reviews),notes:Object.assign({},b.notes||{},a.notes||{}),since:a.since||b.since,updatedAt:Date.now()};
-  }
+  const norm=d=>({checks:d.checks||{},xchecks:d.xchecks||{},tasks:d.tasks||[],reviews:d.reviews||[],notes:d.notes||{},noteAt:d.noteAt||{},since:d.since||B.get().since,updatedAt:d.updatedAt||0});
+  /* One merge, shared with the app, so signing in and every later update
+     from another device are resolved the same way: item by item. */
+  const merge=(a,b)=>B.merge(a,b);
+  const DATA=['checks','xchecks','tasks','reviews','notes','noteAt','since'];
+  const same=(a,b)=>DATA.every(f=>JSON.stringify(a[f])===JSON.stringify(b[f]));
   function payload(s,u){
     const pd=u.providerData&&u.providerData[0];
-    return {checks:s.checks,tasks:s.tasks,reviews:s.reviews,notes:s.notes,since:s.since,updatedAt:s.updatedAt||Date.now(),
+    return {checks:s.checks,xchecks:s.xchecks,tasks:s.tasks,reviews:s.reviews,notes:s.notes,noteAt:s.noteAt,since:s.since,updatedAt:s.updatedAt||Date.now(),
       profile:{name:u.displayName||'',email:u.email||'',photo:u.photoURL||'',provider:(pd&&pd.providerId)||''},lastSeen:serverTimestamp()};
   }
 
@@ -1245,21 +1638,28 @@ const CFG=window.FIREBASE_CONFIG||{};
       const snap=await getDoc(doc(db,'users',uid));
       if(my!==epoch)return;
       const remote=snap.exists()?norm(snap.data()):null,hasCache=B.hasData(cache);
-      let base=null,stamp=false,pushIt=false;
-      if(remote&&hasCache){if((cache.updatedAt||0)>remote.updatedAt){base=cache;pushIt=true;}else base=remote;}
-      else if(remote)base=remote;
-      else if(hasCache){base=cache;pushIt=true;}
-      if(guest&&B.hasData(guest)){base=base?merge(base,guest):guest;stamp=true;pushIt=true;B.clearGuest();}
-      if(!base){base=B.get();stamp=true;pushIt=true;}
-      if(stamp)base.updatedAt=Date.now();
+      /* Nothing is discarded here: whatever this device did while it was
+         offline is merged with whatever the account already holds. */
+      let base=remote,pushIt=!remote;
+      if(hasCache){base=base?merge(base,cache):cache;pushIt=true;}
+      if(guest&&B.hasData(guest)){base=base?merge(base,guest):guest;pushIt=true;B.clearGuest();}
+      if(!base){base=B.get();pushIt=true;}
+      if(remote&&same(base,remote))pushIt=false;
+      base.updatedAt=Date.now();
       B.set(base);
       if(pushIt)await push(true);else B.status('synced');
       if(my!==epoch)return;
       retry=null;
+      /* An update from another device is merged into what is on screen,
+         never used to replace it. If the merge adds anything the account
+         does not have yet, it is sent straight back up. */
       unsub=onSnapshot(doc(db,'users',uid),s=>{
         if(!s.exists()||s.metadata.hasPendingWrites)return;
-        const d=norm(s.data());
-        if(d.updatedAt>(B.get().updatedAt||0)){B.set(d);B.status('synced');}
+        const d=norm(s.data()),local=B.get();
+        if(same(local,d)){B.status('synced');return;}
+        const m=merge(local,d);
+        B.set(m);
+        if(same(m,d))B.status('synced');else push(true);
       },err=>{B.status(err&&err.code==='permission-denied'?'denied':'error');});
     }catch(e){
       console.error(e);
