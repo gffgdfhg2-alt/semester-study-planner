@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Semester Study Planner | خطة الترم الدراسي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f6f8fd; --grid:rgba(43,69,214,.07); --surface:#ffffff; --ink:#14204a; --mute:#5b678f;
+  --line:#c9d2ec; --marker:#ffe14d; --marker-ink:#14204a; --accent:#2b45d6; --bad:#c62f3d; --warn:#b26a00; --ok:#1c7a46;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#0c1633; --grid:rgba(143,166,255,.08); --surface:#12214b; --ink:#e9eeff; --mute:#9dabd9;
+    --line:#2b3d78; --marker:#ffd93b; --marker-ink:#0c1633; --accent:#93a9ff; --bad:#ff8790; --warn:#ffc165; --ok:#6fdc9c;
+  }
+}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:'IBM Plex Sans Arabic','Tajawal',system-ui,'Segoe UI',Tahoma,sans-serif;
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:26px 26px;
+  color:var(--ink);line-height:1.65;font-size:16px;
+  padding-bottom:calc(96px + env(safe-area-inset-bottom,0px));
+}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.code{font-weight:700;letter-spacing:.02em;unicode-bidi:isolate}
+bdi{unicode-bidi:isolate}
+.en{color:var(--mute);font-weight:400;font-size:.82em;margin-inline-start:.55em}
+
+/* header */
+.top{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1.5px solid var(--line);padding-top:env(safe-area-inset-top,0px)}
+.topin{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:10px}
+.ttl{font-weight:700;font-size:1.05rem;line-height:1.3}
+.sub{color:var(--mute);font-size:.78rem;line-height:1.4}
+.wk{min-width:118px;font-size:.8rem;color:var(--mute)}
+.wk .bar{margin-top:3px;height:8px}
+
+/* progress marker */
+.bar{height:12px;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;background:var(--surface)}
+.bar i{display:block;height:100%;width:var(--p,0%);background:var(--marker);transition:width .35s ease}
+
+/* nav */
+.nav{position:fixed;inset-inline:0;bottom:0;z-index:6;background:var(--surface);border-top:1.5px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav ul{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr);list-style:none;padding:0}
+.nav button{width:100%;background:none;border:0;padding:7px 0 6px;display:flex;flex-direction:column;align-items:center;gap:0;color:var(--mute);font-size:.72rem;line-height:1.35;position:relative}
+.nav small{font-size:.62rem;font-weight:400;line-height:1.2;letter-spacing:.02em}
+.nav .ic{width:46px;height:28px;border-radius:14px;display:grid;place-items:center;transition:background .2s;margin-bottom:1px}
+.nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav button.on{color:var(--ink);font-weight:700}
+.nav button.on .ic{background:var(--marker);color:var(--marker-ink)}
+.badge{position:absolute;top:3px;inset-inline-start:calc(50% + 8px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:.68rem;font-weight:700;display:grid;place-items:center}
+@media (prefers-color-scheme:dark){.badge{color:#0c1633}}
+
+/* headings */
+.hero{padding:22px 0 14px}
+.hero h1{font-size:2.3rem;line-height:1.15;font-weight:700}
+.h1en{color:var(--mute);margin-top:2px;font-size:.95rem}
+.hero .date{color:var(--mute);margin-top:2px}
+.hero .prog{display:flex;align-items:center;gap:12px;margin-top:14px}
+.hero .prog .bar{flex:1}
+.hero .prog span{font-size:.85rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+h2{font-size:1.15rem;font-weight:700;margin:26px 0 10px}
+h2 .en{font-size:.78em}
+.note{margin-top:12px;padding:10px 14px;border-inline-start:5px solid var(--marker);background:var(--surface);border-radius:4px 10px 10px 4px;border-block:1.5px solid var(--line);border-inline-end:1.5px solid var(--line)}
+.note span{display:block}
+.note .en2{color:var(--mute);font-size:.86rem;margin-top:2px}
+.notice{margin:12px 0;padding:10px 14px;border:1.5px solid var(--bad);border-radius:8px;background:var(--surface);color:var(--bad);font-size:.9rem}
+
+/* buttons */
+.btn{background:var(--surface);border:1.5px solid var(--ink);border-radius:8px;padding:.45rem .95rem;font-weight:500;line-height:1.4;transition:transform .1s}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn.primary .en{color:inherit;opacity:.8}
+.btn.sm{padding:.2rem .65rem;font-size:.82rem}
+.btn.ghost{border-color:var(--line);color:var(--mute)}
+.link{background:none;border:0;padding:0;color:var(--accent);font-size:.85rem;text-decoration:underline;text-underline-offset:3px;margin-top:8px}
+.daynav{display:flex;gap:8px;padding-top:16px}
+.daynav .btn:nth-child(2){flex:1}
+.alerts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.alert{text-align:start;background:var(--marker);color:var(--marker-ink);border:1.5px solid var(--ink);border-radius:8px;padding:.5rem .9rem;font-weight:500}
+
+/* panels + timetable rows */
+.panel{background:var(--surface);border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+.slot{display:grid;grid-template-columns:82px 1fr;border-top:1.5px solid var(--line)}
+.slot:first-child{border-top:0}
+.gut{padding:14px 6px;text-align:center;border-inline-end:6px solid var(--c);background:color-mix(in srgb,var(--c) 7%,var(--surface))}
+.gut b{display:block;font-size:1.15rem;line-height:1.2;font-variant-numeric:tabular-nums}
+.gut small{display:block;color:var(--mute);font-size:.72rem;line-height:1.35;margin-top:2px}
+.sbody{padding:12px 14px 12px}
+.sbody h3{font-size:1.02rem;font-weight:700;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;line-height:1.4}
+.pill{display:inline-block;border:1.5px solid var(--line);border-radius:5px;padding:0 7px;font-size:.76rem;font-weight:500;color:var(--mute);background:var(--surface)}
+.pill .en{font-size:.95em;margin-inline-start:.4em}
+.pill.type{border-color:var(--c);color:var(--ink)}
+.pill.online{border-style:dashed}
+.meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-top:5px;font-size:.84rem;color:var(--mute)}
+.mark{background:var(--marker);color:var(--marker-ink);padding:0 .55em;border-radius:3px;font-weight:700;font-size:.76rem}
+.mark.soft{background:transparent;border:1.5px solid var(--ink);color:var(--ink)}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.steps .chk{border:1.5px solid var(--line);border-radius:6px;padding:4px 9px 4px 8px;font-size:.82rem;background:var(--surface)}
+.steps .chk:has(input:checked){border-color:var(--c);background:color-mix(in srgb,var(--c) 13%,var(--surface))}
+.empty{padding:22px 16px;text-align:center;color:var(--mute)}
+
+/* checkbox */
+.chk{position:relative;display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.chk input{position:absolute;opacity:0;width:1px;height:1px}
+.chk .box{flex:none;width:20px;height:20px;border:2px solid var(--ink);border-radius:5px;background:var(--surface);display:grid;place-items:center;transition:background .15s}
+.chk input:checked+.box{background:var(--c,var(--accent));border-color:var(--c,var(--accent))}
+.chk input:checked+.box::after{content:'';width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.chk input:checked~.lbl{color:var(--mute);text-decoration:line-through;text-decoration-thickness:1.5px}
+.chk input:focus-visible+.box{outline:3px solid var(--accent);outline-offset:2px}
+.list .chk{display:flex;padding:11px 14px;border-top:1.5px solid var(--line);width:100%}
+.list .chk:first-child{border-top:0}
+
+/* week */
+.week{display:grid;gap:12px}
+.wd{padding:12px 14px;border-inline-start:6px solid var(--line)}
+.wd.is-today{border-inline-start-color:var(--marker);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.wd header{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.wd h3{font-size:1.05rem}
+.wd h3 small{color:var(--mute);font-weight:400;font-size:.8rem;margin-inline-start:8px}
+.wd ul{list-style:none;padding:0;margin:8px 0 6px;display:grid;gap:4px;font-size:.88rem}
+.wd li{display:flex;align-items:center;gap:8px}
+.wd li i{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none}
+.wd li.none{color:var(--mute)}
+.wd li bdi{width:74px;font-variant-numeric:tabular-nums;color:var(--mute)}
+.frac{font-size:.8rem;font-variant-numeric:tabular-nums;color:var(--mute)}
+
+/* forms */
+.form{padding:14px;display:grid;gap:10px}
+.form h3{font-size:1.02rem}
+.form input,.form select,.form textarea,textarea.notes{width:100%;background:var(--paper);border:1.5px solid var(--line);border-radius:8px;padding:.5rem .7rem}
+.form label{display:grid;gap:3px;font-size:.84rem;color:var(--mute)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:.84rem;color:var(--mute)}
+
+/* tasks + reviews */
+.rows{list-style:none;padding:0}
+.rows>li{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;padding:12px 14px;border-top:1.5px solid var(--line);border-inline-start:6px solid var(--c)}
+.rows>li:first-child{border-top:0}
+.tick{width:26px;height:26px;border:2px solid var(--ink);border-radius:6px;background:var(--surface);margin-top:2px;display:grid;place-items:center}
+.done .tick{background:var(--ok);border-color:var(--ok)}
+.done .tick::after{content:'';width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.done b{color:var(--mute);text-decoration:line-through}
+.tk-meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:.82rem;color:var(--mute);margin-top:2px}
+.st{font-size:.86rem;font-weight:700;margin-top:3px}
+.st.bad{color:var(--bad)} .st.warn{color:var(--warn)} .st.ok{color:var(--ok)}
+.rv-main{grid-column:1 / span 2;display:grid;gap:2px}
+.rv-main small{color:var(--mute)}
+.rv-act{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:6px}
+.rows.rvl>li{grid-template-columns:1fr}
+.rows.rvl .rv-main{grid-column:auto}
+.sub-card{padding:14px;border-inline-start:6px solid var(--c)}
+.sub-card h3{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
+.sub-card .cen{color:var(--mute);font-size:.84rem;font-weight:400}
+.sub-card ul{list-style:none;padding:0;margin:8px 0;display:grid;gap:3px;font-size:.88rem}
+.sub-card ul small{color:var(--mute)}
+.counts{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 8px}
+textarea.notes{min-height:74px;resize:vertical}
+.stack{display:grid;gap:12px}
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+
+/* indicators */
+.trend{display:inline-flex;align-items:center;gap:5px;padding:1px 9px 1px 7px;border-radius:6px;font-size:.78rem;font-weight:700;border:1.5px solid currentColor;line-height:1.5;white-space:nowrap}
+.trend svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.trend .en{color:inherit;opacity:.8;font-weight:500;margin-inline-start:.2em}
+.trend.ok{color:var(--ok)} .trend.warn{color:var(--warn)} .trend.bad{color:var(--bad)} .trend.neu{color:var(--mute)}
+.trend.mini{padding:1px 3px;border-radius:5px}
+#wkTxt{display:inline-flex;align-items:center;gap:6px}
+.frac{display:inline-flex;align-items:center;gap:6px}
+.trendbtn{background:none;border:0;padding:0;margin-top:12px;display:inline-flex;align-items:center;gap:8px;font-size:.84rem;color:var(--mute)}
+.pace{padding:16px;display:grid;gap:8px;margin-top:4px}
+.pace .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.pace .big{font-size:3rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.tile{padding:12px 14px;display:grid;gap:6px;align-content:start;justify-items:start}
+.tile .k{color:var(--mute);font-size:.82rem}
+.tile .v{font-size:1.7rem;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:.48em;color:var(--mute);font-weight:400;margin-inline-start:.4em}
+.tile .trend{white-space:normal;flex-wrap:wrap}
+.tile p{font-size:.78rem;color:var(--mute);line-height:1.45}
+.chart{display:grid;gap:6px;padding:14px 10px 10px}
+.chart.c7{grid-template-columns:repeat(7,1fr)}
+.chart.c4{grid-template-columns:repeat(4,1fr)}
+.col{display:grid;justify-items:center;align-content:end;gap:4px;font-size:.66rem;color:var(--mute);text-align:center;line-height:1.3;min-width:0}
+.col .pc{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;font-size:.78rem;min-height:1.2em}
+.col .track{height:96px;width:100%;display:flex;align-items:flex-end;justify-content:center}
+.col .b{display:block;width:70%;max-width:34px;height:var(--h,4px);min-height:4px;background:var(--bc,var(--line));border-radius:5px 5px 0 0}
+.col .dl{display:inline-flex;align-items:center;gap:3px;min-height:22px;font-size:.72rem}
+.col.today .lab{color:var(--ink);font-weight:700}
+.col.today .b{outline:2px solid var(--ink);outline-offset:1px}
+.crs{list-style:none;padding:0}
+.crs li{display:grid;gap:7px;padding:12px 14px;border-top:1.5px solid var(--line);border-inline-start:6px solid var(--c)}
+.crs li:first-child{border-top:0}
+.crs .top2{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.crs .bar{height:9px}
+.crs .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pill.bad{color:var(--bad);border-color:var(--bad)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px}
+/* account + sign-in gate */
+.hr{display:flex;align-items:center;gap:12px}
+.acct{border:1.5px solid var(--ink);background:var(--surface);position:relative;line-height:1.15;flex:none}
+.acct.in{width:40px;height:40px;padding:0;border-radius:50%}
+.av{width:100%;height:100%;border-radius:50%;background:var(--marker);color:var(--marker-ink);display:grid;place-items:center;font-weight:700;position:relative;overflow:hidden}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.dot{position:absolute;bottom:-2px;inset-inline-end:-2px;width:13px;height:13px;border-radius:50%;border:2px solid var(--surface);background:var(--mute)}
+.dot.ok{background:var(--ok)} .dot.warn{background:var(--warn)} .dot.bad{background:var(--bad)}
+.ov{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:16px;overflow:auto;background:radial-gradient(900px 520px at 50% -8%,#1a2a5e 0%,#0b1230 58%,#070c1f 100%)}
+.sheet{--ink:#151b34;--mute:#7d86a3;--line:#e3e6f1;--surface:#fff;--accent:#2a3fd0;width:100%;max-width:420px;margin:auto;background:#fff;color:#151b34;border-radius:28px;padding:30px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.g-av{width:72px;height:72px;border-radius:50%;background:#f1f2f9;color:#4a5678;display:grid;place-items:center;margin:0 auto 20px;overflow:hidden}
+.g-av svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs{display:flex;border-bottom:1.5px solid #eceef6;margin-bottom:6px}
+.tab{flex:1;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1.5px;padding:12px 8px;font-size:1.05rem;font-weight:700;color:#a5adc6}
+.tab.on{color:#151b34;border-bottom-color:#f59e0b}
+.fld{display:block;width:100%;height:54px;margin-top:14px;padding:0 18px;background:#f5f6fc;border:1.5px solid #e3e6f1;border-radius:16px;color:#151b34;font-size:1rem}
+.fld::placeholder{color:#9aa2bd}
+.fld:focus{outline:none;border-color:#f59e0b;background:#fff}
+.flink{background:none;border:0;padding:0;margin-top:14px;color:#2a3fd0;font-size:.9rem}
+.msg{font-size:.88rem;line-height:1.55;margin-top:12px}
+.msg:empty{display:none}
+.msg.err{color:#c62f3d}
+.msg.ok{color:#1c7a46}
+.msg .code2{color:#8a92ad;font-size:.85em}
+.gbtn{display:block;width:100%;height:54px;margin-top:18px;border:0;border-radius:999px;background:#000;color:#fff;font-size:1.05rem;font-weight:700}
+.gbtn[disabled]{opacity:.55;cursor:not-allowed}
+.gbtn.alt{background:#f5f6fc;color:#151b34;border:1.5px solid #e3e6f1;margin-top:10px;font-weight:500}
+.dv{display:flex;align-items:center;gap:12px;color:#9aa2bd;font-size:.9rem;margin:24px 0 16px}
+.dv::before,.dv::after{content:'';flex:1;height:1px;background:#e3e6f1}
+.pr{display:flex;justify-content:center;gap:16px}
+.pbtn{width:66px;height:66px;border-radius:50%;background:#f5f6fc;border:1.5px solid #e3e6f1;display:grid;place-items:center;padding:0}
+.pbtn svg{width:28px;height:28px}
+.pbtn:disabled{opacity:.5;cursor:not-allowed}
+.devnote{border:1.5px dashed #b26a00;color:#b26a00;border-radius:12px;padding:8px 12px;font-size:.84rem;line-height:1.5;margin-top:14px}
+.acc-nm{text-align:center;font-weight:700;font-size:1.15rem}
+.acc-em{text-align:center;color:#7d86a3;font-size:.9rem;margin-top:2px}
+.stat{display:flex;align-items:center;justify-content:center;gap:8px;font-size:.86rem;color:#7d86a3;margin-top:12px}
+.stat .dot{position:static;border:0;width:10px;height:10px;flex:none}
+.credit{margin:38px 0 8px;padding-top:14px;border-top:1.5px solid var(--line);text-align:center;color:var(--mute);font-size:.84rem}
+.credit b{color:var(--ink);font-weight:700}
+
+#toast{position:fixed;inset-inline:16px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:9;max-width:420px;margin-inline:auto;background:var(--ink);color:var(--paper);border-radius:10px;padding:.6rem .9rem;text-align:center;font-size:.9rem;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s}
+#toast.show{opacity:1;transform:none}
+@media (max-width:420px){.hero h1{font-size:2rem}.slot{grid-template-columns:72px 1fr}.two{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<script>
+/* =====================================================================
+   FIREBASE SETTINGS  |  إعدادات Firebase
+   1) Firebase console > Project settings > Your apps > Web app > SDK setup:
+      copy the config values below.
+   2) Authentication > Sign-in method: enable Email/Password, Google and Facebook.
+   3) Firestore Database: create it, then publish these rules:
+
+      rules_version = '2';
+      service cloud.firestore {
+        match /databases/{database}/documents {
+          match /users/{userId} {
+            allow read, write: if request.auth != null && request.auth.uid == userId;
+          }
+        }
+      }
+
+   4) Authentication > Settings > Authorized domains: add the domain where
+      this file is hosted. Popup sign-in does not work from a local file.
+   Data is stored in one document per user: users/{uid}.
+   ===================================================================== */
+window.FIREBASE_CONFIG={
+  apiKey:'AIzaSyABzSITvgo_jB-ecQq9Z1NUBolcoXdMb_Q',
+  authDomain:'first-term-schedule.firebaseapp.com',
+  projectId:'first-term-schedule',
+  storageBucket:'first-term-schedule.firebasestorage.app',
+  messagingSenderId:'506119625778',
+  appId:'1:506119625778:web:cdf0571046702d0aac702b',
+  measurementId:'G-RQDPB1BKLM'
+};
+</script>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topin">
+    <div>
+      <div class="ttl">خطة الترم الدراسي</div>
+      <div class="sub"><bdi>Semester Study Planner</bdi></div>
+      <div class="sub"><bdi>Computing, Level 1 / G2, Fall 2026-2027</bdi></div>
+    </div>
+    <div class="hr">
+      <div class="wk"><span id="wkTxt"></span><div class="bar"><i id="wkBar"></i></div></div>
+      <button id="acct" class="acct in" data-act="acct" aria-label="الحساب" hidden></button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="warn" class="notice" hidden>يتعذر حفظ البيانات في هذا المتصفح (قد يكون وضع التخفي مفعّلًا). ستُمسح البيانات عند إغلاق الصفحة.</div>
+  <main id="view"></main>
+  <footer class="credit" dir="ltr">Developed by <b>Eng. Abdulghani Saeed</b></footer>
+</div>
+
+<nav class="nav" aria-label="التنقل">
+  <ul>
+    <li><button data-act="tab" data-v="today"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg></span><span>اليوم</span><small>Today</small></button></li>
+    <li><button data-act="tab" data-v="week"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9.2 9.5v10M14.8 9.5v10"/></svg></span><span>الأسبوع</span><small>Week</small></button></li>
+    <li><button data-act="tab" data-v="tasks"><span class="ic"><svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10"/><path d="M3.5 6l1.4 1.4L7 5M3.5 12l1.4 1.4L7 11M3.5 18l1.4 1.4L7 17"/></svg></span><span>المهام</span><small>Tasks</small><b class="badge" id="bgTasks" hidden></b></button></li>
+    <li><button data-act="tab" data-v="review"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 0 1-13.7 5.6L4 15.5M4 20v-4.5h4.5"/></svg></span><span>المراجعة</span><small>Review</small><b class="badge" id="bgRev" hidden></b></button></li>
+    <li><button data-act="tab" data-v="subjects"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 4.5h10.5A2.5 2.5 0 0 1 18 7v13H7.5A2.5 2.5 0 0 1 5 17.5z"/><path d="M5 17.5A2.5 2.5 0 0 1 7.5 15H18"/></svg></span><span>المواد</span><small>Courses</small></button></li>
+    <li><button data-act="tab" data-v="progress"><span class="ic"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15l4-4 3 3 5-6"/></svg></span><span>التقدم</span><small>Progress</small></button></li>
+  </ul>
+</nav>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="auth" class="ov" hidden role="dialog" aria-modal="true" aria-labelledby="authT"><div class="sheet" id="authBody"></div></div>
+<input type="file" id="imp" accept="application/json" hidden>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+const $=(s,el=document)=>el.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x;};
+const today0=()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate());};
+const diffDays=(a,b)=>Math.round((a-b)/86400000);
+function fmtDate(d){try{return d.toLocaleDateString('ar-EG-u-nu-latn',{day:'numeric',month:'long'});}catch(e){return iso(d);}}
+function fmtDateEn(d){try{return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});}catch(e){return iso(d);}}
+function hm(s){const p=s.split(':').map(Number);return (p[0]%12||12)+':'+pad(p[1]);}
+function ap(s){return Number(s.split(':')[0])<12?'AM':'PM';}
+function t12(s){return hm(s)+' '+ap(s);}
+const tm=s=>'<bdi dir="ltr">'+t12(s)+'</bdi>';
+const L=(ar,en)=>ar+'<span class="en"><bdi>'+en+'</bdi></span>';
+const H2=(ar,en)=>'<h2>'+L(ar,en)+'</h2>';
+
+/* ---------- data ---------- */
+const DAYS_AR=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const DAYS_EN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const ORDER=[6,0,1,2,3,4,5];
+const TYPE_AR={LEC:'محاضرة',LAB:'عملي',TUT:'سكشن'};
+const TYPE_EN={LEC:'Lecture',LAB:'Lab',TUT:'Tutorial'};
+const SUBJ={
+  CF117:{en:'Introduction to Programming',ar:'مقدمة في البرمجة',color:'#3b6cf0'},
+  BS114:{en:'Physics & Electronics',ar:'فيزياء وإلكترونيات',color:'#0f9d8f'},
+  UR112:{en:'Introduction to Computers',ar:'مقدمة في الحاسب',color:'#d98a00'},
+  BS113:{en:'English Language (1)',ar:'اللغة الإنجليزية',color:'#d6404f'},
+  UR113:{en:'Entrepreneurship and Innovation',ar:'ريادة الأعمال والابتكار',color:'#8a55e0'},
+  UR111:{en:'Human Rights',ar:'حقوق الإنسان',color:'#2f9e4f'},
+  BS116:{en:'Mathematics (1): Calculus for Computing Sciences',ar:'التفاضل والتكامل',color:'#d6479a'}
+};
+const SESS=[
+  {id:'sat-cf-lab',day:6,start:'10:40',end:'12:20',sub:'CF117',type:'LAB',mode:'onsite',place:'B1.1',who:'TA Mai Sherif, Abdallah Mahmod'},
+  {id:'sat-bs114-lab',day:6,start:'12:30',end:'14:05',sub:'BS114',type:'LAB',mode:'onsite',place:'Physics lab 2',who:'TA Omar Alaa, Ahmed Nashaat'},
+  {id:'sat-ur112-lab',day:6,start:'14:10',end:'14:55',sub:'UR112',type:'LAB',mode:'onsite',place:'B 0.2',who:'TA Mona Mohamed, Rawan Nagy'},
+  {id:'sat-ur112-tu',day:6,start:'15:00',end:'15:45',sub:'UR112',type:'TUT',mode:'onsite',place:'B 0.2',who:'TA Mona Mohamed, Rawan Nagy'},
+  {id:'sun-bs113-tut',day:0,start:'09:00',end:'10:35',sub:'BS113',type:'TUT',mode:'online',who:'Dr. Dina'},
+  {id:'sun-ur113-lec',day:0,start:'10:40',end:'11:25',sub:'UR113',type:'LEC',mode:'online',who:'Dr. Romany'},
+  {id:'mon-bs113-lec',day:1,start:'09:00',end:'10:35',sub:'BS113',type:'LEC',mode:'online',who:'Dr. Dina'},
+  {id:'mon-ur111-lec',day:1,start:'10:40',end:'11:25',sub:'UR111',type:'LEC',mode:'online',who:'Dr. Islam Mohamed Abdelqawee'},
+  {id:'wed-ur112-lec',day:3,start:'09:00',end:'10:35',sub:'UR112',type:'LEC',mode:'onsite',place:'Hall A 1.1',who:'Dr. Ahmed S. Salama'},
+  {id:'thu-cf-lec',day:4,start:'09:00',end:'10:35',sub:'CF117',type:'LEC',mode:'onsite',place:'Hall A 0.1',who:'Dr. Shimaa'},
+  {id:'thu-bs116-tu',day:4,start:'10:40',end:'12:20',sub:'BS116',type:'TUT',mode:'onsite',place:'B.Class room 3',who:'Renal Hany'},
+  {id:'thu-bs114-lec',day:4,start:'12:30',end:'14:05',sub:'BS114',type:'LEC',mode:'onsite',place:'Hall A 2.1',who:'Dr. Romany'},
+  {id:'thu-bs116-lec',day:4,start:'14:10',end:'15:45',sub:'BS116',type:'LEC',mode:'onsite',place:'Hall A1.1',who:'Dr. Muhammed Elsayed'}
+];
+const BLOCKS={
+  6:[{t:'مراجعة العملي وإنهاء التقرير أو الكود (30 د)'},{t:'تحضير سكشن الإنجليزي (15 د)'},{t:'الاستعداد لحصص الأحد الأونلاين (9:00 AM)'}],
+  0:[{t:'مراجعة Entrepreneurship والإنجليزي (30 د)'},{t:'Math: مسائل الأسبوع (90 د)'},{t:'CF117: كتابة كود (45 د)'}],
+  1:[{t:'مراجعة الإنجليزي وHuman Rights (30 د)'},{t:'Physics & Electronics (90 د)'},{t:'CF117: كتابة كود (45 د)'}],
+  2:[{t:'CF117: برمجة وتطبيق (ساعتان)'},{t:'Math (90 د)'},{t:'مراجعة UR112 وPhysics (40 د)'},{t:'إنجاز المهام المتأخرة'}],
+  3:[{t:'مراجعة UR112 (20 د)'},{t:'تحضير محاضرات الخميس: CF117 وBS114 وBS116 (45 د)'},{t:'حل مسائل Math قبل السكشن (60 د)'}],
+  4:[{t:'تلخيص الحصص الأربع وتدوين الأسئلة (40 د)'}],
+  5:[{t:'تحضير عملي السبت الثلاثة (60 إلى 75 د)'},{t:'مراجعة أسبوعية واختبار ذاتي لكل مادة (40 د)'},{t:'التخطيط للأسبوع القادم وترتيب المهام (15 د)'}]
+};
+const STEPS={
+  LEC:['تصفحت الشرائح','حضرت','لخّصت (15 د)'],
+  LAB:['حضّرت ورقة العملي','حضرت','أنهيت التقرير أو الكود'],
+  TUT:['حللت المسائل قبلها','حضرت','راجعت أخطائي']
+};
+const NO_CLASS={
+  2:{ar:'لا توجد حصص. اليوم مخصص للبرمجة والرياضيات والمراجعة.',en:'No classes. Dedicated to programming, math and review.'},
+  5:{ar:'لا توجد حصص. اليوم مخصص لتحضير عملي السبت والتخطيط الأسبوعي.',en:'No classes. Lab preparation and weekly planning.'}
+};
+const INTERVALS=[1,3,7,14,30];
+const KEY='abdelghani-planner-v1';
+
+/* ---------- state ---------- */
+const defaults=()=>({checks:{},tasks:[],reviews:[],notes:{},since:iso(today0()),updatedAt:0});
+function readKey(k){try{const raw=localStorage.getItem(k);return raw?JSON.parse(raw):null;}catch(e){return null;}}
+function load(k){const o=readKey(k);if(!o)return defaults();const r=Object.assign(defaults(),o);if(!r.since)r.since=iso(today0());return r;}
+const cloud={configured:false,ready:false,user:null,status:'idle',err:''};
+const CFG=window.FIREBASE_CONFIG||{};
+cloud.configured=!!(CFG.apiKey&&CFG.projectId&&!/^PASTE/i.test(CFG.apiKey)&&!/^PASTE/i.test(CFG.projectId));
+cloud.checking=cloud.configured;cloud.mode='login';cloud.msg='';cloud.msgKind='err';cloud.loadFailed=false;
+const bridge={onSave:null,cloud:cloud,guestKey:KEY};
+let storageKey=KEY;
+let S=load(storageKey);
+function save(stamp){
+  if(stamp!==false)S.updatedAt=Date.now();
+  try{localStorage.setItem(storageKey,JSON.stringify(S));}catch(e){$('#warn').hidden=false;}
+  if(stamp!==false&&bridge.onSave)bridge.onSave(S);
+}
+save(false);
+try{localStorage.setItem(KEY+'-t','1');localStorage.removeItem(KEY+'-t');}catch(e){$('#warn').hidden=false;}
+let tab='today';
+let viewDate=today0();
+
+/* ---------- derived ---------- */
+const sessOf=dow=>SESS.filter(s=>s.day===dow).sort((a,b)=>a.start.localeCompare(b.start));
+const blockList=dow=>(BLOCKS[dow]||[]).concat([{t:'مراجعة الدروس المستحقة من تبويب المراجعة (10 د)'}]);
+function dayLine(dow){
+  const ss=sessOf(dow);
+  if(!ss.length)return NO_CLASS[dow]||{ar:'لا توجد حصص.',en:'No classes.'};
+  const on=ss.every(x=>x.mode==='online'),n=ss.length;
+  const from=tm(ss[0].start),to=tm(ss[n-1].end);
+  const cnt=n===1?'حصة واحدة':n===2?'حصتان':n+' حصص';
+  return {
+    ar:(on?'أونلاين':'حضوري')+' من '+from+' إلى '+to+' ('+cnt+')',
+    en:(on?'Online':'On campus')+', '+from+' to '+to+' ('+n+(n===1?' session':' sessions')+')'
+  };
+}
+function dayStats(d){
+  const k=iso(d),dow=d.getDay();let total=0,done=0;
+  sessOf(dow).forEach(s=>{for(let i=0;i<3;i++){total++;if(S.checks[k+'|s|'+s.id+'|'+i])done++;}});
+  blockList(dow).forEach((b,i)=>{total++;if(S.checks[k+'|b|'+i])done++;});
+  return {total,done};
+}
+function weekStart(){const t=today0();return addDays(t,-((t.getDay()+1)%7));}
+const activeRev=()=>S.reviews.filter(r=>!r.done);
+const dueRev=()=>activeRev().filter(r=>diffDays(parse(r.due),today0())<=0);
+function taskInfo(t){
+  const T=today0(),dl=parse(t.deadline),left=diffDays(dl,T),start=addDays(dl,-t.lead),startIn=diffDays(start,T);
+  let cls,txt;
+  if(left<0){cls='bad';txt='متأخرة '+(-left)+' يوم';}
+  else if(startIn<=0){cls=left<=2?'bad':'warn';txt=left===0?'التسليم اليوم':'حان موعد البدء، متبقٍ '+left+' يوم';}
+  else{cls='ok';txt='البدء بعد '+startIn+' يوم ('+fmtDate(start)+')';}
+  return {left,cls,txt};
+}
+const urgentTasks=()=>S.tasks.filter(t=>!t.done&&taskInfo(t).cls!=='ok');
+const subjOpts=()=>Object.keys(SUBJ).map(c=>'<option value="'+c+'">'+c+' '+SUBJ[c].ar+'</option>').join('');
+function chk(key,label,cls){
+  return '<label class="chk '+(cls||'')+'"><input type="checkbox" data-k="'+key+'" '+(S.checks[key]?'checked':'')+'><span class="box"></span><span class="lbl">'+esc(label)+'</span></label>';
+}
+function note(o){return '<p class="note"><span>'+o.ar+'</span><span class="en2"><bdi>'+o.en+'</bdi></span></p>';}
+
+/* ---------- views ---------- */
+function viewToday(){
+  const d=viewDate,dow=d.getDay(),k=iso(d),isToday=k===iso(today0());
+  const ss=sessOf(dow),st=dayStats(d),pct=st.total?Math.round(st.done/st.total*100):0;
+  const n=new Date(),nowM=n.getHours()*60+n.getMinutes();let nextFound=false;
+  const rows=ss.map(s=>{
+    const sub=SUBJ[s.sub],a=s.start.split(':').map(Number),b=s.end.split(':').map(Number);
+    let tag='';
+    if(isToday){
+      if(nowM>=a[0]*60+a[1]&&nowM<b[0]*60+b[1])tag='<span class="mark">الآن <bdi>Now</bdi></span>';
+      else if(nowM<a[0]*60+a[1]&&!nextFound){tag='<span class="mark soft">التالية <bdi>Next</bdi></span>';nextFound=true;}
+    }
+    const labels=STEPS[s.type].slice();if(s.mode==='online')labels[1]='انضممت أونلاين';
+    const steps=labels.map((l,i)=>chk(k+'|s|'+s.id+'|'+i,l)).join('');
+    const where=s.mode==='online'?'<span class="pill online">'+L('أونلاين','Online')+'</span>':'<span class="pill"><bdi>'+esc(s.place)+'</bdi></span>';
+    return '<div class="slot" style="--c:'+sub.color+'">'+
+      '<div class="gut"><b>'+hm(s.start)+'</b><small>'+ap(s.start)+'</small><small>حتى <bdi dir="ltr">'+hm(s.end)+' '+ap(s.end)+'</bdi></small></div>'+
+      '<div class="sbody"><h3><span class="code" dir="ltr">'+s.sub+'</span><span>'+sub.ar+'</span><span class="pill type">'+L(TYPE_AR[s.type],TYPE_EN[s.type])+'</span>'+tag+'</h3>'+
+      '<div class="meta">'+where+'<bdi>'+esc(s.who)+'</bdi></div>'+
+      '<div class="steps">'+steps+'</div>'+
+      '<button class="link" data-act="addrev" data-sub="'+s.sub+'">إضافة درس إلى المراجعة</button></div></div>';
+  }).join('');
+  const blocks=blockList(dow).map((b,i)=>chk(k+'|b|'+i,b.t)).join('');
+  const dr=dueRev().length,ut=urgentTasks().length;
+  const alerts=(dr?'<button class="alert" data-act="tab" data-v="review">لديك '+dr+' مراجعة مستحقة</button>':'')+
+               (ut?'<button class="alert" data-act="tab" data-v="tasks">لديك '+ut+' مهمة حان موعد بدئها أو متأخرة</button>':'');
+  return '<div class="daynav"><button class="btn" data-act="prev">السابق</button><button class="btn" data-act="now">اليوم</button><button class="btn" data-act="next">التالي</button></div>'+
+    '<section class="hero"><h1>'+DAYS_AR[dow]+'</h1><div class="date">'+fmtDate(d)+'</div><div class="h1en"><bdi>'+fmtDateEn(d)+'</bdi></div>'+
+    '<div class="prog"><div class="bar"><i style="--p:'+pct+'%"></i></div><span>'+st.done+' / '+st.total+'</span></div>'+
+    (isToday?'<button class="trendbtn" data-act="tab" data-v="progress">'+chip(paceStatus(calcWeek(weekStart()).pace))+'<span>'+L('الوتيرة الأسبوعية','Weekly pace')+'</span></button>':'')+
+    note(dayLine(dow))+(isToday&&alerts?'<div class="alerts">'+alerts+'</div>':'')+'</section>'+
+    H2('حصص اليوم','Sessions')+
+    (ss.length?'<div class="panel">'+rows+'</div>':'<div class="panel empty">لا توجد حصص في هذا اليوم.</div>')+
+    H2('مذاكرة اليوم','Study plan')+'<div class="panel list">'+blocks+'</div>';
+}
+
+function viewWeek(){
+  const ws=weekStart();let T=0,D=0;
+  const cards=ORDER.map((dow,i)=>{
+    const d=addDays(ws,i),st=dayStats(d);T+=st.total;D+=st.done;
+    const isT=iso(d)===iso(today0());
+    const list=sessOf(dow).map(s=>'<li style="--c:'+SUBJ[s.sub].color+'"><i></i><bdi>'+t12(s.start)+'</bdi><b class="code" dir="ltr">'+s.sub+'</b><span>'+L(TYPE_AR[s.type],TYPE_EN[s.type])+(s.mode==='online'?' '+L('أونلاين','Online'):'')+'</span></li>').join('')||'<li class="none">'+L('بدون حصص','No classes')+'</li>';
+    return '<article class="panel wd '+(isT?'is-today':'')+'"><header><h3>'+DAYS_AR[dow]+'<small><bdi>'+DAYS_EN[dow]+'</bdi></small><small>'+fmtDate(d)+'</small></h3><span class="frac">'+dayArrow(d,st)+st.done+' / '+st.total+'</span></header>'+
+      '<ul>'+list+'</ul><button class="btn sm" data-act="go" data-d="'+iso(d)+'">فتح اليوم</button></article>';
+  }).join('');
+  const p=T?Math.round(D/T*100):0;
+  return '<section class="hero"><h1>الأسبوع</h1><div class="h1en"><bdi>Weekly overview</bdi></div><div class="date">من '+fmtDate(ws)+' إلى '+fmtDate(addDays(ws,6))+'</div>'+
+    '<div class="prog"><div class="bar"><i style="--p:'+p+'%"></i></div><span>'+p+'%</span></div></section>'+
+    '<div class="week">'+cards+'</div>';
+}
+
+function viewTasks(){
+  const item=t=>{
+    const s=SUBJ[t.sub],i=taskInfo(t);
+    return '<li class="'+(t.done?'done':'')+'" style="--c:'+s.color+'"><button class="tick" data-act="tkdone" data-id="'+t.id+'" aria-pressed="'+t.done+'" aria-label="تم"></button>'+
+      '<div><b dir="auto">'+esc(t.title)+'</b><div class="tk-meta"><span class="code" dir="ltr">'+t.sub+'</span><span class="pill">'+esc(t.type)+'</span><span>موعد التسليم '+fmtDate(parse(t.deadline))+'</span></div>'+
+      (t.done?'':'<div class="st '+i.cls+'">'+i.txt+'</div>')+'</div>'+
+      '<button class="btn sm ghost" data-act="tkdel" data-id="'+t.id+'">حذف</button></li>';
+  };
+  const act=S.tasks.filter(t=>!t.done).sort((a,b)=>a.deadline.localeCompare(b.deadline));
+  const dn=S.tasks.filter(t=>t.done).sort((a,b)=>b.deadline.localeCompare(a.deadline));
+  return '<section class="hero"><h1>المهام</h1><div class="h1en"><bdi>Tasks and deadlines</bdi></div>'+
+    note({ar:'تُجدول كل مهمة لتبدأ قبل موعد التسليم بثلاثة أيام على الأقل، ولا تبدأ خلال آخر 48 ساعة.',en:'Each task is scheduled to start at least 3 days before its deadline, and never within the last 48 hours.'})+'</section>'+
+    '<form class="panel form" data-form="task"><h3>'+L('مهمة جديدة','New task')+'</h3>'+
+    '<label><span>'+L('الاسم','Title')+'</span><input name="title" placeholder="e.g. Assignment 1" required></label>'+
+    '<div class="two"><label><span>'+L('المادة','Course')+'</span><select name="sub">'+subjOpts()+'</select></label><label><span>'+L('النوع','Type')+'</span><select name="type"><option>مهمة</option><option>سكشن</option><option>عملي</option><option>اختبار قصير</option><option>أخرى</option></select></label></div>'+
+    '<div class="two"><label><span>'+L('موعد التسليم','Deadline')+'</span><input type="date" name="deadline" required></label><label><span>'+L('البدء قبل (أيام)','Start days before')+'</span><input type="number" name="lead" min="1" max="30" value="3"></label></div>'+
+    '<button class="btn primary" type="submit">'+L('إضافة المهمة','Add task')+'</button></form>'+
+    H2('المطلوب','Open')+(act.length?'<ul class="panel rows">'+act.map(item).join('')+'</ul>':'<div class="panel empty">لا توجد مهام مفتوحة حاليًا.</div>')+
+    (dn.length?H2('المنجزة','Completed')+'<ul class="panel rows">'+dn.map(item).join('')+'</ul>':'');
+}
+
+function viewReview(){
+  const T=today0(),act=activeRev();
+  const due=act.filter(r=>diffDays(parse(r.due),T)<=0).sort((a,b)=>a.due.localeCompare(b.due));
+  const up=act.filter(r=>diffDays(parse(r.due),T)>0).sort((a,b)=>a.due.localeCompare(b.due));
+  const mastered=S.reviews.filter(r=>r.done).length;
+  const item=(r,isDue)=>{
+    const s=SUBJ[r.sub],late=-diffDays(parse(r.due),T);
+    return '<li style="--c:'+s.color+'"><div class="rv-main"><span class="code" dir="ltr">'+r.sub+'</span><b dir="auto">'+esc(r.topic)+'</b>'+
+      '<small>'+(isDue?(late>0?'متأخرة '+late+' يوم':'موعدها اليوم'):'موعدها '+fmtDate(parse(r.due)))+'، المراجعة '+(r.stage+1)+' من '+INTERVALS.length+'</small></div>'+
+      '<div class="rv-act">'+(isDue?'<button class="btn sm primary" data-act="rvdone" data-id="'+r.id+'">تمت المراجعة</button><button class="btn sm" data-act="rvforgot" data-id="'+r.id+'">لم أتذكرها</button>':'')+
+      '<button class="btn sm ghost" data-act="rvdel" data-id="'+r.id+'">حذف</button></div></li>';
+  };
+  return '<section class="hero"><h1>المراجعة</h1><div class="h1en"><bdi>Spaced review</bdi></div>'+
+    note({ar:'تعود الدروس المنجزة للمراجعة بعد يوم، ثم 3 أيام، ثم أسبوع، ثم أسبوعين، ثم شهر.',en:'Completed topics return for review after 1, 3, 7, 14 and 30 days.'})+'</section>'+
+    '<form class="panel form" data-form="review"><h3>'+L('درس جديد','New topic')+'</h3>'+
+    '<div class="two"><label><span>'+L('المادة','Course')+'</span><select name="sub">'+subjOpts()+'</select></label><label><span>'+L('الدرس أو الموضوع','Topic')+'</span><input name="topic" placeholder="e.g. Loops" required></label></div>'+
+    '<button class="btn primary" type="submit">'+L('إضافة إلى المراجعة','Add to review')+'</button></form>'+
+    H2('مستحقة اليوم','Due today')+(due.length?'<ul class="panel rows rvl">'+due.map(r=>item(r,true)).join('')+'</ul>':'<div class="panel empty">'+(act.length?'لا توجد مراجعات مستحقة اليوم.':'لا توجد دروس مضافة بعد.')+'</div>')+
+    (up.length?H2('القادمة','Upcoming')+'<ul class="panel rows rvl">'+up.map(r=>item(r,false)).join('')+'</ul>':'')+
+    (mastered?'<p class="hint" style="margin-top:14px">دروس متقنة: '+mastered+' (اكتملت مراجعاتها الخمس).</p>':'');
+}
+
+function viewSubjects(){
+  const cards=Object.keys(SUBJ).map(code=>{
+    const s=SUBJ[code];
+    const ss=SESS.filter(x=>x.sub===code).sort((a,b)=>ORDER.indexOf(a.day)-ORDER.indexOf(b.day)||a.start.localeCompare(b.start));
+    const rv=S.reviews.filter(r=>r.sub===code&&!r.done).length,tk=S.tasks.filter(t=>t.sub===code&&!t.done).length;
+    const rows=ss.length?ss.map(x=>'<li><b>'+DAYS_AR[x.day]+'</b> <bdi>'+t12(x.start)+'</bdi> '+TYPE_AR[x.type]+' '+(x.mode==='online'?'أونلاين':'<bdi>'+esc(x.place)+'</bdi>')+' <small><bdi>'+esc(x.who)+'</bdi></small></li>').join(''):'<li>بدون حصص محددة</li>';
+    return '<article class="panel sub-card" style="--c:'+s.color+'"><h3><span class="code" dir="ltr">'+code+'</span><span>'+s.ar+'</span><span class="cen"><bdi>'+esc(s.en)+'</bdi></span></h3>'+
+      '<ul>'+rows+'</ul><div class="counts"><span class="pill">'+rv+' مراجعة</span><span class="pill">'+tk+' مهمة مفتوحة</span></div>'+
+      '<textarea class="notes" data-note="'+code+'" aria-label="ملاحظات '+code+'" placeholder="ملاحظات / Notes"></textarea></article>';
+  }).join('');
+  return '<section class="hero"><h1>المواد</h1><div class="h1en"><bdi>Courses</bdi></div>'+
+    note({ar:Object.keys(SUBJ).length+' مواد و'+SESS.length+' حصة أسبوعيًا.',en:Object.keys(SUBJ).length+' courses, '+SESS.length+' sessions per week.'})+'</section><div class="stack">'+cards+'</div>'+
+    H2('البيانات','Data and backup')+'<div class="panel form"><p class="hint">تُحفظ البيانات في هذا المتصفح، وتُزامَن مع الحساب عند تسجيل الدخول، ويمكن تصدير نسخة احتياطية منها.</p>'+
+    '<div class="tools"><button class="btn" data-act="export">نسخة احتياطية</button><button class="btn" data-act="import">استعادة نسخة</button><button class="btn ghost" data-act="reset">مسح كل البيانات</button></div></div>';
+}
+
+/* ---------- progress and indicators ---------- */
+const ARROW={
+  up:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>',
+  down:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
+  flat:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
+};
+const NEU={cls:'neu',arrow:'flat',ar:'لا توجد بيانات بعد',en:'No data yet'};
+function chip(st,mini){
+  if(mini)return '<span class="trend mini '+st.cls+'" title="'+st.en+'" aria-label="'+st.ar+'">'+ARROW[st.arrow]+'</span>';
+  return '<span class="trend '+st.cls+'">'+ARROW[st.arrow]+'<span>'+st.ar+'</span><bdi class="en">'+st.en+'</bdi></span>';
+}
+function paceStatus(r){
+  if(r===null)return {cls:'neu',arrow:'flat',ar:'بداية المتابعة',en:'Just started'};
+  if(r>1.02)return {cls:'ok',arrow:'up',ar:'متقدم',en:'Ahead'};
+  if(r>=0.85)return {cls:'ok',arrow:'flat',ar:'على المسار',en:'On track'};
+  if(r>=0.6)return {cls:'warn',arrow:'down',ar:'تأخر طفيف',en:'Slightly behind'};
+  return {cls:'bad',arrow:'down',ar:'متأخر',en:'Behind'};
+}
+function pctStatus(p){
+  if(p===null)return NEU;
+  if(p>=85)return {cls:'ok',arrow:'up',ar:'جيد',en:'Good'};
+  if(p>=60)return {cls:'warn',arrow:'flat',ar:'متوسط',en:'Fair'};
+  return {cls:'bad',arrow:'down',ar:'منخفض',en:'Low'};
+}
+function deltaStatus(dl){
+  if(dl>=5)return {cls:'ok',arrow:'up',ar:'تحسّن',en:'Improving'};
+  if(dl<=-5)return {cls:'bad',arrow:'down',ar:'تراجع',en:'Declining'};
+  return {cls:'neu',arrow:'flat',ar:'مستقر',en:'Stable'};
+}
+const sinceDate=()=>parse(S.since);
+function itemsOfDay(d){
+  const k=iso(d),out=[];
+  sessOf(d.getDay()).forEach(s=>{for(let i=0;i<3;i++)out.push({key:k+'|s|'+s.id+'|'+i,sub:s.sub,step:i,start:s.start});});
+  blockList(d.getDay()).forEach((b,i)=>out.push({key:k+'|b|'+i,step:-1}));
+  return out;
+}
+function expectedNow(it,d){
+  const c=diffDays(d,today0());
+  if(c<0)return true;
+  if(c>0)return false;
+  if(it.step===0||it.step===1){
+    const n=new Date(),m=n.getHours()*60+n.getMinutes(),p=it.start.split(':').map(Number);
+    return m>=p[0]*60+p[1];
+  }
+  return false;
+}
+function calcWeek(ws){
+  const since=sinceDate();
+  let E=0,Dall=0,tot=0,doneAll=0;
+  const days=[],bySub={},att={E:0,D:0};
+  for(let i=0;i<7;i++){
+    const d=addDays(ws,i),c=diffDays(d,today0()),active=diffDays(d,since)>=0;
+    let dt=0,dd=0;
+    if(active){
+      itemsOfDay(d).forEach(it=>{
+        const done=!!S.checks[it.key],exp=expectedNow(it,d);
+        dt++;if(done)dd++;
+        if(exp)E++;
+        if(c<=0&&done)Dall++;
+        if(it.sub){
+          const b=bySub[it.sub]||(bySub[it.sub]={E:0,D:0});
+          if(exp)b.E++;
+          if(c<=0&&done)b.D++;
+          if(it.step===1&&exp){att.E++;if(done)att.D++;}
+        }
+      });
+    }
+    tot+=dt;doneAll+=dd;
+    days.push({d,c,active,total:dt,done:dd,pct:dt?Math.round(dd/dt*100):null});
+  }
+  return {E,Dall,tot,doneAll,days,bySub,att,pace:E?Dall/E:null,pct:tot?Math.round(doneAll/tot*100):null};
+}
+function streakDays(){
+  const T=today0(),since=sinceDate();let n=0;
+  for(let i=0;i<120;i++){
+    const d=addDays(T,-i);
+    if(diffDays(d,since)<0)break;
+    const st=dayStats(d),ok=st.total&&st.done/st.total>=0.7;
+    if(ok)n++;else if(i===0)continue;else break;
+  }
+  return n;
+}
+function fmtShortEn(d){try{return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});}catch(e){return iso(d);}}
+function dayArrow(d,st){
+  if(diffDays(d,today0())>=0||diffDays(d,sinceDate())<0||!st.total)return '';
+  return chip(pctStatus(Math.round(st.done/st.total*100)),true);
+}
+
+function viewProgress(){
+  const T=today0(),ws=weekStart(),m=calcWeek(ws),prev=calcWeek(addDays(ws,-7));
+  const ps=paceStatus(m.pace),curPct=m.pace===null?null:Math.min(100,Math.round(m.pace*100));
+  const revs=activeRev(),openT=S.tasks.filter(t=>!t.done);
+  const sign=n=>(n>0?'+':'')+n;
+  let vs='';
+  if(curPct!==null&&prev.pct!==null){
+    const dl=curPct-prev.pct;
+    vs='<div class="row">'+chip(deltaStatus(dl))+'<span class="hint">'+L('مقارنة بالأسبوع الماضي ('+prev.pct+'%)','vs last week')+' <bdi dir="ltr">'+sign(dl)+'%</bdi></span></div>';
+  }
+  const pace='<section class="panel pace"><div class="hint">'+L('الوتيرة الأسبوعية','Weekly pace')+'</div>'+
+    '<div class="row"><span class="big">'+(curPct===null?'—':curPct+'%')+'</span>'+chip(ps)+'</div>'+
+    '<div class="hint">'+(m.E?'أُنجز '+m.Dall+' من '+m.E+' بندًا مطلوبًا حتى الآن <bdi>('+m.Dall+' of '+m.E+' scheduled items)</bdi>':'لم تبدأ البنود المطلوبة بعد <bdi>(No scheduled items yet)</bdi>')+'</div>'+vs+'</section>';
+
+  const attP=m.att.E?Math.round(m.att.D/m.att.E*100):null;
+  const overdueR=revs.filter(r=>diffDays(parse(r.due),T)<0).length,dueR=revs.filter(r=>diffDays(parse(r.due),T)===0).length;
+  const revSt=overdueR?{cls:'bad',arrow:'down',ar:overdueR+' متأخرة',en:overdueR+' overdue'}:dueR?{cls:'warn',arrow:'flat',ar:'مستحقة اليوم',en:'Due today'}:{cls:'ok',arrow:'up',ar:'لا تأخير',en:'Up to date'};
+  const overdueT=openT.filter(t=>taskInfo(t).left<0).length,startT=openT.filter(t=>{const i=taskInfo(t);return i.left>=0&&i.cls!=='ok';}).length;
+  const tkSt=overdueT?{cls:'bad',arrow:'down',ar:overdueT+' متأخرة',en:overdueT+' overdue'}:startT?{cls:'warn',arrow:'flat',ar:startT+' حان موعد بدئها',en:startT+' to start'}:{cls:'ok',arrow:'up',ar:'في الموعد',en:'On schedule'};
+  const sd=streakDays(),hasData=Object.keys(S.checks).length>0;
+  const stSt=!hasData?NEU:sd>=3?{cls:'ok',arrow:'up',ar:'ممتازة',en:'Strong'}:sd>=1?{cls:'warn',arrow:'flat',ar:'قصيرة',en:'Short'}:{cls:'bad',arrow:'down',ar:'منقطعة',en:'Broken'};
+  const tile=(ar,en,v,unit,sub,st)=>'<div class="panel tile"><div class="k">'+L(ar,en)+'</div><div class="v">'+v+(unit?'<small>'+unit+'</small>':'')+'</div>'+chip(st)+(sub?'<p>'+sub+'</p>':'')+'</div>';
+  const tiles='<div class="tiles">'+
+    tile('الحضور','Attendance',attP===null?'—':attP+'%','',m.att.E?'حضور '+m.att.D+' من '+m.att.E+' حصة حتى الآن':'لم تبدأ حصص هذا الأسبوع بعد',attP===null?NEU:pctStatus(attP))+
+    tile('المراجعات','Reviews',dueR+overdueR,'مستحقة','دروس نشطة: '+revs.length,revSt)+
+    tile('المهام','Tasks',openT.length,'مفتوحة','',tkSt)+
+    tile('سلسلة الالتزام','Streak',sd,'يوم','يُحتسب اليوم عند إنجاز 70% فأكثر',stSt)+'</div>';
+
+  const dayCols=m.days.map((x,i)=>{
+    const dow=ORDER[i];let h='4px',bc='var(--line)',pc='';
+    if(x.active&&x.pct!==null&&x.c<=0){h=Math.max(4,x.pct)+'%';bc=x.c===0?'var(--accent)':(x.pct>=85?'var(--ok)':x.pct>=60?'var(--warn)':'var(--bad)');pc=x.pct+'%';}
+    return '<div class="col '+(x.c===0?'today':'')+'"><span class="pc">'+pc+'</span><div class="track"><i class="b" style="--h:'+h+';--bc:'+bc+'"></i></div><span class="lab">'+DAYS_AR[dow]+'<br><bdi>'+DAYS_EN[dow].slice(0,3)+'</bdi></span></div>';
+  }).join('');
+
+  const hist=[3,2,1,0].map(k=>({k,d:addDays(ws,-7*k),v:k?calcWeek(addDays(ws,-7*k)).pct:curPct}));
+  const histCols=hist.map((h,i)=>{
+    const pv=i?hist[i-1].v:null;let dl='';
+    if(h.v!==null&&pv!==null){const x=h.v-pv;dl=chip(deltaStatus(x),true)+'<span>'+sign(x)+'</span>';}
+    const bc=h.k===0?'var(--accent)':h.v===null?'var(--line)':h.v>=85?'var(--ok)':h.v>=60?'var(--warn)':'var(--bad)';
+    const lab=h.k===0?'الحالي<br><bdi>Current</bdi>':fmtDate(h.d)+'<br><bdi>'+fmtShortEn(h.d)+'</bdi>';
+    return '<div class="col '+(h.k===0?'today':'')+'"><span class="pc">'+(h.v===null?'':h.v+'%')+'</span><div class="track"><i class="b" style="--h:'+(h.v===null?'4px':Math.max(4,h.v)+'%')+';--bc:'+bc+'"></i></div><span class="lab">'+lab+'</span><span class="dl">'+dl+'</span></div>';
+  }).join('');
+
+  const crs=Object.keys(SUBJ).map(code=>{
+    const sj=SUBJ[code],b=m.bySub[code]||{E:0,D:0};
+    const p=b.E?Math.min(100,Math.round(b.D/b.E*100)):null,st=p===null?NEU:pctStatus(p);
+    const oR=revs.filter(r=>r.sub===code&&diffDays(parse(r.due),T)<0).length,oT=openT.filter(t=>t.sub===code&&taskInfo(t).left<0).length;
+    return '<li style="--c:'+sj.color+'"><div class="top2"><span><span class="code" dir="ltr">'+code+'</span> '+sj.ar+'</span><b>'+(p===null?'—':p+'%')+'</b></div>'+
+      '<div class="bar"><i style="--p:'+(p||0)+'%"></i></div>'+
+      '<div class="chips">'+chip(st)+(oR?'<span class="pill bad">'+oR+' مراجعة متأخرة</span>':'')+(oT?'<span class="pill bad">'+oT+' مهمة متأخرة</span>':'')+
+      (b.E?'<span class="pill">'+b.D+' / '+b.E+'</span>':'')+'</div></li>';
+  }).join('');
+
+  const legend='<div class="panel legend">'+chip({cls:'ok',arrow:'up',ar:'متقدم / جيد / تحسّن',en:'Ahead / Good / Improving'})+chip({cls:'ok',arrow:'flat',ar:'على المسار',en:'On track'})+chip({cls:'warn',arrow:'flat',ar:'متوسط',en:'Fair'})+chip({cls:'bad',arrow:'down',ar:'متأخر / منخفض / تراجع',en:'Behind / Low / Declining'})+'</div>';
+
+  return '<section class="hero"><h1>التقدم</h1><div class="h1en"><bdi>Progress and trends</bdi></div>'+
+    note({ar:'تُقارَن الوتيرة بما يتطلبه الجدول حتى هذه اللحظة (تحضير، حضور، تلخيص، مذاكرة).',en:'Pace compares completed items with what the schedule requires up to now.'})+'</section>'+
+    pace+tiles+
+    H2('النشاط اليومي','Daily activity')+'<div class="panel chart c7">'+dayCols+'</div>'+
+    H2('آخر 4 أسابيع','Last 4 weeks')+'<div class="panel chart c4">'+histCols+'</div>'+
+    H2('التقدم في المواد','Course progress')+'<ul class="panel crs">'+crs+'</ul>'+
+    H2('دليل المؤشرات','Legend')+legend+
+    H2('إعدادات','Settings')+'<div class="panel form"><label><span>'+L('بداية المتابعة','Tracking since')+'</span><input type="date" id="since" value="'+esc(S.since)+'"></label><p class="hint">'+L('تُحتسب المؤشرات ابتداءً من هذا التاريخ.','Indicators are calculated from this date.')+'</p></div>';
+}
+
+const views={today:viewToday,week:viewWeek,tasks:viewTasks,review:viewReview,subjects:viewSubjects,progress:viewProgress};
+
+/* ---------- render ---------- */
+function render(){
+  $('#view').innerHTML=views[tab]();
+  if(tab==='subjects'){document.querySelectorAll('textarea[data-note]').forEach(t=>{t.value=S.notes[t.dataset.note]||'';});}
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===tab));
+  const dr=dueRev().length,ut=urgentTasks().length;
+  const br=$('#bgRev'),bt=$('#bgTasks');
+  br.hidden=!dr;br.textContent=dr;bt.hidden=!ut;bt.textContent=ut;
+  const ws=weekStart();let T=0,D=0;
+  for(let i=0;i<7;i++){const s=dayStats(addDays(ws,i));T+=s.total;D+=s.done;}
+  const p=T?Math.round(D/T*100):0;
+  $('#wkTxt').innerHTML='الأسبوع '+p+'% '+chip(paceStatus(calcWeek(ws).pace),true);
+  $('#wkBar').style.setProperty('--p',p+'%');
+}
+function setTab(t){tab=t;render();window.scrollTo(0,0);}
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2600);}
+function addReview(sub,topic){
+  S.reviews.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),sub,topic,stage:0,due:iso(addDays(today0(),INTERVALS[0])),done:false});
+  save();
+}
+
+/* ---------- account and cloud sync (Firebase) ---------- */
+const STAT={idle:'غير متصل بحساب',syncing:'جارٍ المزامنة',saving:'جارٍ الحفظ',synced:'تمت المزامنة',offline:'غير متصل بالإنترنت، الحفظ محلي',denied:'تعذّر الحفظ: راجع قواعد Firestore',error:'حدث خطأ أثناء المزامنة'};
+const GOOGLE_SVG='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+const FB_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#1877F2" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.34l-.53 3.49h-2.81V24C19.61 23.1 24 18.1 24 12.07z"/></svg>';
+const USER_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.6-3.8 3.6-6 7.5-6s6.9 2.2 7.5 6"/></svg>';
+function setLocked(v){document.querySelectorAll('.top,.wrap,.nav').forEach(el=>{if(v){el.setAttribute('inert','');el.setAttribute('aria-hidden','true');}else{el.removeAttribute('inert');el.removeAttribute('aria-hidden');}});}
+function statusCls(){const s=cloud.status;return s==='synced'?'ok':(s==='denied'||s==='error')?'bad':s==='idle'?'':'warn';}
+function avatar(u){
+  const ch=esc(((u.name||u.email||'?').trim()[0]||'?').toUpperCase());
+  return '<span class="av">'+ch+(u.photoURL?'<img src="'+esc(u.photoURL)+'" alt="" referrerpolicy="no-referrer" onerror="this.remove()">':'')+'</span>';
+}
+function renderAcct(){
+  const b=$('#acct'),u=cloud.user;
+  if(!u){b.hidden=true;return;}
+  b.hidden=false;b.className='acct in';b.innerHTML=avatar(u)+'<i class="dot '+statusCls()+'"></i>';b.setAttribute('aria-label','الحساب: '+(u.name||u.email||''));
+}
+function setMsg(html,kind){
+  cloud.msg=html||'';cloud.msgKind=kind||'err';
+  const el=$('#authMsg');
+  if(el){el.className='msg'+(cloud.msg?' '+cloud.msgKind:'');el.innerHTML=cloud.msg;}
+}
+function renderAuth(){
+  const u=cloud.user,el=$('#authBody');
+  if(u){
+    el.innerHTML='<div class="g-av">'+avatar(u)+'</div><div class="acc-nm" dir="auto">'+esc(u.name||u.email||'')+'</div>'+
+      (u.name&&u.email?'<div class="acc-em" dir="ltr">'+esc(u.email)+'</div>':'')+
+      '<div class="stat"><i class="dot '+statusCls()+'"></i><span>'+(STAT[cloud.status]||STAT.idle)+'</span></div>'+
+      '<button class="gbtn" data-act="signout">تسجيل الخروج</button><button class="gbtn alt" data-act="syncnow">مزامنة الآن</button><button class="gbtn alt" data-act="authclose">إغلاق</button>';
+    return;
+  }
+  if(cloud.loadFailed){
+    el.innerHTML='<div class="g-av">'+USER_SVG+'</div><div class="msg err" style="text-align:center">'+cloud.msg+'</div><button class="gbtn" data-act="reload">إعادة المحاولة</button>';
+    return;
+  }
+  if(cloud.checking){
+    el.innerHTML='<div class="g-av">'+USER_SVG+'</div><p class="acc-em">جارٍ التحقق من الحساب…</p>';
+    return;
+  }
+  const su=cloud.mode==='signup',dis=cloud.configured?'':' disabled';
+  el.innerHTML='<div class="g-av">'+USER_SVG+'</div>'+
+    '<div class="tabs" role="tablist"><button type="button" role="tab" class="tab'+(su?'':' on')+'" data-act="authtab" data-m="login">تسجيل دخول</button><button type="button" role="tab" class="tab'+(su?' on':'')+'" data-act="authtab" data-m="signup">حساب جديد</button></div>'+
+    '<form data-form="auth" data-m="'+(su?'signup':'login')+'" novalidate>'+
+    (su?'<input class="fld" name="name" type="text" placeholder="الاسم" autocomplete="name"'+dis+'>':'')+
+    '<input class="fld" name="email" type="email" placeholder="البريد الإلكتروني" autocomplete="email" inputmode="email" dir="auto"'+dis+'>'+
+    '<input class="fld" name="password" type="password" placeholder="كلمة السر" autocomplete="'+(su?'new-password':'current-password')+'"'+dis+'>'+
+    (su?'':'<button type="button" class="flink" data-act="forgot"'+dis+'>نسيت كلمة السر؟</button>')+
+    '<div id="authMsg" class="msg" role="alert"></div>'+
+    (cloud.configured?'':'<div class="devnote">إعدادات Firebase غير مكتملة (القسم FIREBASE SETTINGS في أعلى الملف).</div>')+
+    '<button class="gbtn" id="authSubmit" type="submit"'+dis+'>'+(su?'إنشاء حساب':'دخول')+'</button></form>'+
+    '<div class="dv">أو سجّل دخولك من خلال</div>'+
+    '<div class="pr"><button type="button" class="pbtn" data-act="signin" data-p="google" aria-label="Google"'+dis+'>'+GOOGLE_SVG+'</button>'+
+    '<button type="button" class="pbtn" data-act="signin" data-p="facebook" aria-label="Facebook"'+dis+'>'+FB_SVG+'</button></div>';
+  setMsg(cloud.msg,cloud.msgKind);
+}
+function openAuth(){
+  if(!cloud.user)setLocked(true);
+  const o=$('#auth');o.hidden=false;renderAuth();
+}
+function closeAuth(){if(!cloud.user)return;$('#auth').hidden=true;}
+Object.assign(bridge,{
+  keyFor:uid=>KEY+':'+uid,
+  read:readKey,
+  hasData:o=>!!o&&((o.updatedAt||0)>0||Object.keys(o.checks||{}).length>0||(o.tasks||[]).length>0||(o.reviews||[]).length>0),
+  clearGuest(){try{localStorage.removeItem(KEY);}catch(e){}},
+  get:()=>S,
+  set(o){S=Object.assign(defaults(),o);if(!S.since)S.since=iso(today0());save(false);render();},
+  status(v){cloud.status=v;renderAcct();if(cloud.user&&!$('#auth').hidden)renderAuth();},
+  fail(ar,en,code){
+    cloud.checking=false;
+    const h=esc(ar)+(code?' <bdi dir="ltr" class="code2">('+esc(code)+')</bdi>':'');
+    if($('#auth').hidden||!$('#authMsg')){cloud.msg=h;cloud.msgKind='err';openAuth();}else setMsg(h,'err');
+  },
+  notice(ar){setMsg(esc(ar),'ok');},
+  loadFailed(ar){cloud.checking=false;cloud.loadFailed=true;cloud.msg=esc(ar);cloud.msgKind='err';openAuth();},
+  setName(n){if(cloud.user){cloud.user.name=n;renderAcct();}},
+  signedIn(u){
+    cloud.user=u;cloud.checking=false;cloud.loadFailed=false;cloud.msg='';
+    storageKey=KEY+':'+u.uid;S=load(storageKey);
+    renderAcct();setLocked(false);$('#auth').hidden=true;render();
+  },
+  signedOut(){
+    cloud.user=null;cloud.checking=false;cloud.status='idle';cloud.msg='';
+    storageKey=KEY;S=load(KEY);renderAcct();render();openAuth();
+  }
+});
+window.PlannerBridge=bridge;
+
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{
+  if(e.target.id==='auth'){closeAuth();return;}
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act,id=el.dataset.id;
+  if(a==='acct'){openAuth();return;}
+  if(a==='authclose'){closeAuth();return;}
+  if(a==='authtab'){cloud.mode=el.dataset.m;cloud.msg='';renderAuth();return;}
+  if(a==='reload'){window.location.reload();return;}
+  if(a==='forgot'){
+    const em=(document.querySelector('#authBody input[name=email]')||{value:''}).value.trim();
+    if(!em){setMsg('يرجى كتابة البريد الإلكتروني أولًا.');return;}
+    if(bridge.resetPassword)bridge.resetPassword(em);
+    return;
+  }
+  if(a==='signin'){setMsg('');if(bridge.signIn)bridge.signIn(el.dataset.p);return;}
+  if(a==='signout'){if(bridge.doSignOut)bridge.doSignOut();return;}
+  if(a==='syncnow'){if(bridge.syncNow)bridge.syncNow();return;}
+  if(a==='tab'){setTab(el.dataset.v);return;}
+  if(a==='prev'){viewDate=addDays(viewDate,-1);render();return;}
+  if(a==='next'){viewDate=addDays(viewDate,1);render();return;}
+  if(a==='now'){viewDate=today0();render();return;}
+  if(a==='go'){viewDate=parse(el.dataset.d);setTab('today');return;}
+  if(a==='addrev'){
+    const topic=window.prompt('اسم الدرس أو الموضوع / Topic name:');
+    if(topic&&topic.trim()){addReview(el.dataset.sub,topic.trim());render();toast('أُضيف إلى المراجعة، والمراجعة الأولى غدًا');}
+    return;
+  }
+  if(a==='tkdone'){const t=S.tasks.find(x=>x.id===id);if(t){t.done=!t.done;save();render();}return;}
+  if(a==='tkdel'){S.tasks=S.tasks.filter(x=>x.id!==id);save();render();return;}
+  if(a==='rvdone'){
+    const r=S.reviews.find(x=>x.id===id);
+    if(r){r.stage++;if(r.stage>=INTERVALS.length){r.done=true;toast('اكتملت مراجعات هذا الدرس');}else{r.due=iso(addDays(today0(),INTERVALS[r.stage]));}save();render();}
+    return;
+  }
+  if(a==='rvforgot'){const r=S.reviews.find(x=>x.id===id);if(r){r.stage=0;r.due=iso(addDays(today0(),1));save();render();toast('سيعود الدرس للمراجعة غدًا');}return;}
+  if(a==='rvdel'){S.reviews=S.reviews.filter(x=>x.id!==id);save();render();return;}
+  if(a==='export'){
+    const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    const l=document.createElement('a');l.href=URL.createObjectURL(blob);l.download='planner-backup.json';document.body.appendChild(l);l.click();l.remove();
+    return;
+  }
+  if(a==='import'){$('#imp').click();return;}
+  if(a==='reset'){if(window.confirm('سيتم مسح كل البيانات المحفوظة، بما فيها بيانات الحساب المزامنة. هل تريد المتابعة؟')){S=defaults();save();render();}return;}
+});
+
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.matches('input[type=checkbox][data-k]')){
+    const key=t.dataset.k;
+    if(t.checked)S.checks[key]=true;else delete S.checks[key];
+    save();
+    const y=window.scrollY;render();window.scrollTo(0,y);
+    const n=document.querySelector('[data-k="'+CSS.escape(key)+'"]');if(n)n.focus();
+    return;
+  }
+  if(t.id==='since'&&t.value){S.since=t.value;save();render();return;}
+  if(t.id==='imp'&&t.files&&t.files[0]){
+    const fr=new FileReader();
+    fr.onload=()=>{
+      try{const o=JSON.parse(fr.result);if(!o||typeof o!=='object')throw 0;S=Object.assign(defaults(),o);save();render();toast('تمت استعادة النسخة الاحتياطية');}
+      catch(err){toast('هذا الملف ليس نسخة صالحة');}
+      t.value='';
+    };
+    fr.readAsText(t.files[0]);
+  }
+});
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#auth').hidden)closeAuth();});
+
+document.addEventListener('input',e=>{
+  if(e.target.matches('textarea[data-note]')){S.notes[e.target.dataset.note]=e.target.value;save();}
+});
+
+document.addEventListener('submit',e=>{
+  const f=e.target.closest('form[data-form]');if(!f)return;
+  e.preventDefault();
+  const fd=new FormData(f);
+  if(f.dataset.form==='auth'){
+    const email=String(fd.get('email')||'').trim(),pw=String(fd.get('password')||''),name=String(fd.get('name')||'').trim();
+    if(!email||!pw){setMsg('يرجى إدخال البريد الإلكتروني وكلمة السر.');return;}
+    if(!bridge.emailAuth){setMsg('خدمة الدخول غير جاهزة بعد.');return;}
+    setMsg('');const btn=$('#authSubmit');if(btn)btn.disabled=true;
+    Promise.resolve(bridge.emailAuth(f.dataset.m,email,pw,name)).then(()=>{const b2=$('#authSubmit');if(b2)b2.disabled=false;});
+    return;
+  }
+  if(f.dataset.form==='task'){
+    const title=(fd.get('title')||'').trim(),dl=fd.get('deadline');
+    if(!title||!dl)return;
+    S.tasks.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),title,sub:fd.get('sub'),type:fd.get('type'),deadline:dl,lead:Math.max(1,Math.min(30,parseInt(fd.get('lead'),10)||3)),done:false});
+    save();render();toast('أُضيفت المهمة');
+  }else if(f.dataset.form==='review'){
+    const topic=(fd.get('topic')||'').trim();if(!topic)return;
+    addReview(fd.get('sub'),topic);render();toast('أُضيف إلى المراجعة، والمراجعة الأولى غدًا');
+  }
+});
+
+render();renderAcct();if(!cloud.user)openAuth();
+})();
+</script>
+
+<script type="module">
+/* Firebase Authentication (Google, Facebook) + Firestore sync. One document per user: users/{uid}. */
+const B=window.PlannerBridge;
+const CFG=window.FIREBASE_CONFIG||{};
+(async function(){
+  if(!B||!B.cloud.configured)return;
+  B.cloud.ready=true;
+  let m;
+  try{
+    const base='https://www.gstatic.com/firebasejs/10.14.1/';
+    const r=await Promise.all([import(base+'firebase-app.js'),import(base+'firebase-auth.js'),import(base+'firebase-firestore.js')]);
+    m={app:r[0],auth:r[1],fs:r[2]};
+  }catch(e){
+    console.error(e);
+    B.status('offline');
+    B.loadFailed('تعذّر تحميل خدمات Firebase. تحقق من الاتصال بالإنترنت.');
+    return;
+  }
+  const {initializeApp}=m.app;
+  const {getAuth,onAuthStateChanged,signInWithPopup,signInWithRedirect,getRedirectResult,GoogleAuthProvider,FacebookAuthProvider,signOut,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendPasswordResetEmail,updateProfile}=m.auth;
+  const {getFirestore,doc,getDoc,setDoc,onSnapshot,serverTimestamp}=m.fs;
+  const app=initializeApp(CFG),auth=getAuth(app),db=getFirestore(app);
+  try{auth.useDeviceLanguage();}catch(e){}
+
+  const MSG={
+    'auth/account-exists-with-different-credential':'هذا البريد مسجّل مسبقًا بطريقة دخول أخرى.',
+    'auth/unauthorized-domain':'هذا النطاق غير مصرّح به في Firebase (Authentication، Settings، Authorized domains).',
+    'auth/operation-not-allowed':'طريقة الدخول هذه غير مفعّلة في Firebase.',
+    'auth/network-request-failed':'تعذّر الاتصال بالإنترنت.',
+    'auth/web-storage-unsupported':'المتصفح يمنع التخزين المطلوب لتسجيل الدخول.',
+    'auth/invalid-api-key':'مفتاح Firebase غير صالح.',
+    'auth/operation-not-supported-in-this-environment':'تسجيل الدخول غير مدعوم عند فتح الملف محليًا، يلزم رفعه على استضافة (https).',
+    'auth/invalid-credential':'البريد الإلكتروني أو كلمة السر غير صحيحة.',
+    'auth/wrong-password':'البريد الإلكتروني أو كلمة السر غير صحيحة.',
+    'auth/user-not-found':'البريد الإلكتروني أو كلمة السر غير صحيحة.',
+    'auth/invalid-email':'صيغة البريد الإلكتروني غير صحيحة.',
+    'auth/missing-password':'يرجى إدخال كلمة السر.',
+    'auth/email-already-in-use':'هذا البريد مسجّل مسبقًا، استخدم تبويب تسجيل دخول.',
+    'auth/weak-password':'كلمة السر ضعيفة، يلزم 6 أحرف على الأقل.',
+    'auth/too-many-requests':'محاولات كثيرة، حاول مرة أخرى بعد قليل.',
+    'auth/user-disabled':'هذا الحساب معطّل.'
+  };
+  function fail(e){
+    console.error(e);
+    B.fail(MSG[e&&e.code]||'تعذّر تسجيل الدخول.','',e&&e.code);
+  }
+  const providers={
+    google(){const p=new GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});return p;},
+    facebook(){const p=new FacebookAuthProvider();p.addScope('email');return p;}
+  };
+  B.signIn=async function(kind){
+    const prov=providers[kind]();
+    try{await signInWithPopup(auth,prov);}
+    catch(e){
+      if(e.code==='auth/popup-blocked'){try{await signInWithRedirect(auth,prov);}catch(e2){fail(e2);}return;}
+      if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request')return;
+      fail(e);
+    }
+  };
+  B.emailAuth=async function(mode,email,pw,name){
+    try{
+      if(mode==='signup'){
+        const c=await createUserWithEmailAndPassword(auth,email,pw);
+        if(name){try{await updateProfile(c.user,{displayName:name});B.setName(name);push(false);}catch(e){console.error(e);}}
+      }else{
+        await signInWithEmailAndPassword(auth,email,pw);
+      }
+    }catch(e){fail(e);}
+  };
+  B.resetPassword=async function(email){
+    try{await sendPasswordResetEmail(auth,email);B.notice('تم إرسال رابط إعادة تعيين كلمة السر إلى بريدك الإلكتروني.');}
+    catch(e){fail(e);}
+  };
+  B.doSignOut=()=>signOut(auth).catch(fail);
+  getRedirectResult(auth).catch(fail);
+
+  /* ---- data helpers ---- */
+  const norm=d=>({checks:d.checks||{},tasks:d.tasks||[],reviews:d.reviews||[],notes:d.notes||{},since:d.since||B.get().since,updatedAt:d.updatedAt||0});
+  function merge(a,b){
+    const byId=(x,y)=>{const mp=new Map();(x||[]).forEach(i=>mp.set(i.id,i));(y||[]).forEach(i=>{if(!mp.has(i.id))mp.set(i.id,i);});return Array.from(mp.values());};
+    return {checks:Object.assign({},b.checks||{},a.checks||{}),tasks:byId(a.tasks,b.tasks),reviews:byId(a.reviews,b.reviews),notes:Object.assign({},b.notes||{},a.notes||{}),since:a.since||b.since,updatedAt:Date.now()};
+  }
+  function payload(s,u){
+    const pd=u.providerData&&u.providerData[0];
+    return {checks:s.checks,tasks:s.tasks,reviews:s.reviews,notes:s.notes,since:s.since,updatedAt:s.updatedAt||Date.now(),
+      profile:{name:u.displayName||'',email:u.email||'',photo:u.photoURL||'',provider:(pd&&pd.providerId)||''},lastSeen:serverTimestamp()};
+  }
+
+  /* ---- push (debounced) ---- */
+  let timer=null;
+  async function run(){
+    const u=auth.currentUser;if(!u)return;
+    if(navigator.onLine===false){B.status('offline');return;}
+    B.status('saving');
+    try{await setDoc(doc(db,'users',u.uid),payload(B.get(),u));B.status('synced');}
+    catch(e){console.error(e);B.status(e&&e.code==='permission-denied'?'denied':'error');}
+  }
+  function push(now){clearTimeout(timer);if(now)return run();timer=setTimeout(run,900);}
+  B.onSave=()=>{if(auth.currentUser){B.status('saving');push(false);}};
+  B.syncNow=()=>push(true);
+
+  /* ---- sign-in state ---- */
+  let unsub=null,epoch=0,retry=null;
+  async function attach(user,my){
+    const uid=user.uid;
+    B.status('syncing');
+    try{
+      const cache=B.read(B.keyFor(uid)),guest=B.read(B.guestKey);
+      const snap=await getDoc(doc(db,'users',uid));
+      if(my!==epoch)return;
+      const remote=snap.exists()?norm(snap.data()):null,hasCache=B.hasData(cache);
+      let base=null,stamp=false,pushIt=false;
+      if(remote&&hasCache){if((cache.updatedAt||0)>remote.updatedAt){base=cache;pushIt=true;}else base=remote;}
+      else if(remote)base=remote;
+      else if(hasCache){base=cache;pushIt=true;}
+      if(guest&&B.hasData(guest)){base=base?merge(base,guest):guest;stamp=true;pushIt=true;B.clearGuest();}
+      if(!base){base=B.get();stamp=true;pushIt=true;}
+      if(stamp)base.updatedAt=Date.now();
+      B.set(base);
+      if(pushIt)await push(true);else B.status('synced');
+      if(my!==epoch)return;
+      retry=null;
+      unsub=onSnapshot(doc(db,'users',uid),s=>{
+        if(!s.exists()||s.metadata.hasPendingWrites)return;
+        const d=norm(s.data());
+        if(d.updatedAt>(B.get().updatedAt||0)){B.set(d);B.status('synced');}
+      },err=>{B.status(err&&err.code==='permission-denied'?'denied':'error');});
+    }catch(e){
+      console.error(e);
+      if(e&&e.code==='permission-denied'){B.status('denied');return;}
+      B.status(navigator.onLine===false?'offline':'error');
+      retry=()=>attach(user,epoch);
+    }
+  }
+  window.addEventListener('online',()=>{if(retry){const r=retry;retry=null;r();}else push(false);});
+  window.addEventListener('offline',()=>{if(auth.currentUser)B.status('offline');});
+
+  onAuthStateChanged(auth,user=>{
+    const my=++epoch;
+    if(unsub){unsub();unsub=null;}
+    clearTimeout(timer);retry=null;
+    if(!user){B.signedOut();return;}
+    const pd=user.providerData&&user.providerData[0];
+    B.signedIn({uid:user.uid,name:user.displayName||'',email:user.email||'',photoURL:user.photoURL||'',provider:(pd&&pd.providerId)||''});
+    attach(user,my);
+  });
+})();
+</script>
+</body>
+</html>
